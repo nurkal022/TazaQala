@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+.env
+
+# Flask
+instance/
+*.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+
+# Uploads (keep structure)
+static/uploads/*
+!static/uploads/.gitkeep
+!static/uploads/cleanup/.gitkeep
+!static/uploads/reports/.gitkeep
+!static/uploads/after/.gitkeep
+
+# Environment
+.env
+.env.local

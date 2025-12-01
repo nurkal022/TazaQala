@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Вход{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #e8f5e9 0%, #e1f5fe 100%);
+        min-height: 100vh;
+    }
+    
+    .auth-container {
+        max-width: 480px;
+        margin: 3rem auto;
+        background: white;
+        border-radius: 20px;
+        padding: 3rem 2.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .auth-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, var(--green-lime), var(--blue-ice));
+    }
+    
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+    
+    .auth-header h1 {
+        font-size: 2.2rem;
+        color: var(--graphite);
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+    
+    .auth-header p {
+        color: #757575;
+        font-size: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--graphite);
+        font-size: 0.95rem;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: 0.9rem 1.2rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-family: 'Nunito Sans', sans-serif;
+        transition: all 0.3s ease;
+        background: #fafafa;
+    }
+    
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--green-lime);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 187, 106, 0.1);
+    }
+    
+    .remember-me {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .remember-me input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: var(--green-lime);
+    }
+    
+    .remember-me label {
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .submit-btn {
+        width: 100%;
+        padding: 1.1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(102, 187, 106, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 187, 106, 0.4);
+    }
+    
+    .auth-footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e0e0e0;
+        color: #757575;
+    }
+    
+    .auth-footer a {
+        color: var(--blue-ice);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s;
+    }
+    
+    .auth-footer a:hover {
+        color: var(--green-lime);
+        text-decoration: underline;
+    }
+    
+    .icon-input-group {
+        position: relative;
+    }
+    
+    .icon-input-group i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        font-size: 1.1rem;
+    }
+    
+    .icon-input-group input {
+        padding-left: 3rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1>🔐 Вход</h1>
+            <p>Войдите, чтобы продолжить работу с платформой</p>
+        </div>
+        
+        <form method="POST">
+            <div class="form-group">
+                <label>👤 Имя пользователя</label>
+                <div class="icon-input-group">
+                    <i class="bi bi-person"></i>
+                    <input type="text" name="username" required autofocus placeholder="Введите логин">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>🔒 Пароль</label>
+                <div class="icon-input-group">
+                    <i class="bi bi-lock"></i>
+                    <input type="password" name="password" required placeholder="Введите пароль">
+                </div>
+            </div>
+            
+            <div class="remember-me">
+                <input type="checkbox" name="remember" id="remember">
+                <label for="remember" style="margin: 0; font-weight: 400;">Запомнить меня</label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary submit-btn">
+                Войти
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Нет аккаунта? <a href="{{ url_for('auth.register') }}">Зарегистрироваться</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

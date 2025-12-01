@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}О проекте{% endblock %}
+
+{% block extra_css %}
+<style>
+    .about-hero {
+        background: linear-gradient(135deg, var(--blue-ice), var(--green-lime));
+        color: white;
+        padding: 4rem 2rem;
+        text-align: center;
+        border-radius: 16px;
+        margin-bottom: 3rem;
+    }
+    
+    .about-hero h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+    }
+    
+    .about-section {
+        background: white;
+        padding: 3rem 2rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px var(--shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .about-section h2 {
+        font-size: 2rem;
+        color: var(--graphite);
+        margin-bottom: 1.5rem;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin: 2rem 0;
+    }
+    
+    .feature-card {
+        text-align: center;
+        padding: 2rem;
+        background: #f5f5f5;
+        border-radius: 12px;
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--graphite);
+    }
+    
+    .feature-desc {
+        color: #757575;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="about-hero">
+        <h1>🌿 О проекте</h1>
+        <p style="font-size: 1.3rem;">Гражданская платформа для создания чистого Алматы</p>
+    </div>
+    
+    <div class="about-section">
+        <h2>🎯 Наша миссия</h2>
+        <p style="font-size: 1.1rem; line-height: 1.8; color: #555;">
+            Создать движение граждан, объединённых идеей сделать Алматы чистым, современным и экологичным городом. 
+            Мы верим, что каждый может внести вклад — просто сообщив о проблеме. Платформа использует современные 
+            технологии AI-модерации, геолокации и геймификации для вовлечения жителей в процесс очистки города.
+        </p>
+    </div>
+    
+    <div class="about-section">
+        <h2>✨ Как это работает</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📸</div>
+                <div class="feature-title">1. Сфотографируй</div>
+                <div class="feature-desc">Сделай фото крупного скопления мусора на улице</div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📍</div>
+                <div class="feature-title">2. Отметь место</div>
+                <div class="feature-desc">Укажи местоположение на карте города</div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <div class="feature-title">3. AI проверит</div>
+                <div class="feature-desc">Искусственный интеллект мгновенно анализирует фото</div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">⭐</div>
+                <div class="feature-title">4. Получи баллы</div>
+                <div class="feature-desc">Зарабатывай баллы и участвуй в лидерборде</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="about-section">
+        <h2>🎮 Балльная система</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid #e0e0e0;">
+                <td style="padding: 1rem;"><strong>Подтверждённый репорт</strong></td>
+                <td style="padding: 1rem; text-align: right; color: var(--green-lime); font-weight: 700;">+10 баллов</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e0e0e0;">
+                <td style="padding: 1rem;"><strong>С GPS и комментарием</strong></td>
+                <td style="padding: 1rem; text-align: right; color: var(--green-lime); font-weight: 700;">+5 баллов</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #e0e0e0;">
+                <td style="padding: 1rem;"><strong>Точка убрана (фото после)</strong></td>
+                <td style="padding: 1rem; text-align: right; color: var(--green-lime); font-weight: 700;">+20 баллов</td>
+            </tr>
+        </table>
+        
+        <div style="margin-top: 2rem; padding: 1.5rem; background: #e8f5e9; border-radius: 12px;">
+            <h3 style="margin: 0 0 1rem 0;">🏆 Уровни</h3>
+            <ul style="margin: 0; padding-left: 1.5rem;">
+                <li><strong>Новичок</strong> — 0–50 баллов</li>
+                <li><strong>Активист</strong> — 50–200 баллов</li>
+                <li><strong>Эко-патриот</strong> — 200–500 баллов</li>
+                <li><strong>Городской герой</strong> — 500+ баллов</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="about-section">
+        <h2>🤖 AI-технологии</h2>
+        <p style="font-size: 1.1rem; line-height: 1.8; color: #555;">
+            Платформа использует искусственный интеллект для автоматической модерации фотографий. 
+            AI-модель анализирует изображение на наличие мусора, определяет тип загрязнения, 
+            проверяет качество фото и выявляет дубликаты. Это позволяет ускорить обработку 
+            сообщений и снизить нагрузку на модераторов.
+        </p>
+    </div>
+    
+    <div class="about-section" style="text-align: center; background: linear-gradient(135deg, var(--green-lime), var(--blue-ice)); color: white;">
+        <h2 style="color: white;">🚀 Присоединяйся!</h2>
+        <p style="font-size: 1.2rem; margin: 1.5rem 0;">Вместе мы сделаем Алматы чище!</p>
+        <a href="{{ url_for('reports.new_report') }}" class="btn btn-primary" style="background: white; color: var(--green-lime); font-size: 1.1rem; padding: 1rem 2rem;">
+            Отправить первый репорт →
+        </a>
+    </div>
+</div>
+{% endblock %}
+

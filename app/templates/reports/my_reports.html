@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Мои репорты{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 style="margin: 2rem 0;">📍 Мои репорты</h1>
+    
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('reports.new_report') }}" class="btn btn-primary">
+            <i class="bi bi-plus"></i> Создать новый репорт
+        </a>
+    </div>
+    
+    {% if reports %}
+        <div style="display: grid; gap: 1.5rem;">
+            {% for report in reports %}
+            <div style="display: flex; gap: 1rem; padding: 1.5rem; background: white; border-radius: 12px; box-shadow: 0 4px 20px var(--shadow);">
+                <img src="{{ url_for('static', filename='uploads/' + report.photo_path) }}" 
+                     style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;"
+                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22150%22 height=%22150%22%3E%3Crect fill=%22%23ddd%22 width=%22150%22 height=%22150%22/%3E%3C/svg%3E'">
+                
+                <div style="flex: 1;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span style="padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+                                     background: {{ '#e8f5e9' if report.status == 'confirmed' else '#fff9e6' if report.status == 'pending' else '#e3f2fd' if report.status == 'cleaned' else '#ffebee' }};
+                                     color: {{ '#2e7d32' if report.status == 'confirmed' else '#f57c00' if report.status == 'pending' else '#1565c0' if report.status == 'cleaned' else '#c62828' }};">
+                            {{ 'Подтверждено' if report.status == 'confirmed' else 'На проверке' if report.status == 'pending' else 'Убрано' if report.status == 'cleaned' else 'Отклонено' }}
+                        </span>
+                        <span style="color: #757575; font-size: 0.9rem;">
+                            {{ report.created_at.strftime('%d.%m.%Y %H:%M') }}
+                        </span>
+                    </div>
+                    
+                    <h3 style="margin: 0 0 0.5rem 0;">{{ report.district or 'Алматы' }} • {{ report.address or 'Местоположение' }}</h3>
+                    
+                    <p style="color: #757575; margin: 0 0 1rem 0;">
+                        {{ report.description or 'Без описания' }}
+                    </p>
+                    
+                    <div style="display: flex; gap: 1rem; font-size: 0.9rem; color: #757575;">
+                        <span>AI: {{ (report.ai_confidence * 100) | round }}%</span>
+                        <span>👁️ {{ report.views_count }}</span>
+                        <span>👍 {{ report.upvotes }}</span>
+                    </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <a href="/report/{{ report.id }}" class="btn btn-outline" style="padding: 0.5rem 1rem;">Подробнее</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="background: white; padding: 4rem; border-radius: 16px; text-align: center; box-shadow: 0 4px 20px var(--shadow);">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📸</div>
+            <h2>У вас пока нет репортов</h2>
+            <p style="color: #757575; margin: 1rem 0 2rem;">Создайте свой первый репорт и помогите сделать Алматы чище!</p>
+            <a href="{{ url_for('reports.new_report') }}" class="btn btn-primary">Создать первый репорт</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+

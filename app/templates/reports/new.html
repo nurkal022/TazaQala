@@ -1,0 +1,701 @@
+{% extends "base.html" %}
+
+{% block title %}Сообщить о проблеме{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #f0f9ff 0%, #f5f3ff 50%, #fef3f2 100%);
+        min-height: 100vh;
+    }
+    
+    .report-form-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        background: white;
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .report-form-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, #5F5FFF, #8B5CF6, #EC4899, #FF1B8D);
+    }
+    
+    .form-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+        animation: fadeIn 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .form-header h1 {
+        font-size: 2.8rem;
+        background: linear-gradient(135deg, #5F5FFF, #EC4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+        font-weight: 900;
+    }
+    
+    .form-header p {
+        color: #666;
+        font-size: 1.15rem;
+        font-weight: 500;
+    }
+    
+    .form-group {
+        margin-bottom: 2rem;
+        animation: slideIn 0.5s ease-out backwards;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    .form-group:nth-child(1) { animation-delay: 0.1s; }
+    .form-group:nth-child(2) { animation-delay: 0.2s; }
+    .form-group:nth-child(3) { animation-delay: 0.3s; }
+    .form-group:nth-child(4) { animation-delay: 0.4s; }
+    .form-group:nth-child(5) { animation-delay: 0.5s; }
+    
+    .form-group label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        color: var(--graphite);
+        font-size: 1rem;
+    }
+    
+    .form-group label i {
+        color: #5F5FFF;
+        font-size: 1.2rem;
+    }
+    
+    .form-group input:not([type="file"]):not([type="hidden"]),
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid #e8e8e8;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-family: 'Nunito Sans', sans-serif;
+        transition: all 0.3s ease;
+        background: #fafafa;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: #5F5FFF;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(95, 95, 255, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .form-group textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+    
+    .photo-upload {
+        border: 3px dashed #d0d0d0;
+        border-radius: 16px;
+        padding: 3rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.4s ease;
+        position: relative;
+        background: linear-gradient(135deg, #f8f9ff 0%, #fff5f8 100%);
+    }
+    
+    .photo-upload:hover {
+        border-color: #5F5FFF;
+        background: linear-gradient(135deg, #f0f3ff 0%, #fff0f5 100%);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(95, 95, 255, 0.15);
+    }
+    
+    .photo-upload-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .photo-upload i {
+        font-size: 4rem;
+        background: linear-gradient(135deg, #5F5FFF, #EC4899);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    .photo-upload p {
+        margin: 0;
+        color: #666;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .photo-upload small {
+        color: #999;
+        font-size: 0.9rem;
+    }
+    
+    .photo-upload input[type="file"] {
+        display: none;
+    }
+    
+    .photo-preview-wrapper {
+        margin-top: 1.5rem;
+        display: none;
+        animation: fadeIn 0.5s ease-out;
+    }
+    
+    .photo-preview {
+        width: 100%;
+        max-height: 400px;
+        object-fit: cover;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .photo-preview-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .photo-preview-actions button {
+        padding: 0.6rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .change-photo {
+        background: #5F5FFF;
+        color: white;
+    }
+    
+    .change-photo:hover {
+        background: #4848EE;
+        transform: translateY(-2px);
+    }
+    
+    .remove-photo {
+        background: #fee;
+        color: #E53935;
+    }
+    
+    .remove-photo:hover {
+        background: #fdd;
+    }
+    
+    #miniMap {
+        height: 350px;
+        border-radius: 16px;
+        overflow: hidden;
+        margin-top: 1rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: 2px solid #e8e8e8;
+    }
+    
+    .location-btn {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, #5F5FFF, #8B5CF6);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+    
+    .location-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(95, 95, 255, 0.3);
+    }
+    
+    .location-btn i {
+        font-size: 1.3rem;
+    }
+    
+    .location-info {
+        background: linear-gradient(135deg, #e8f5ff, #f0f9ff);
+        padding: 1.25rem;
+        border-radius: 12px;
+        margin-top: 1rem;
+        display: none;
+        border-left: 4px solid #5F5FFF;
+        animation: fadeIn 0.4s ease-out;
+    }
+    
+    .location-info strong {
+        color: #5F5FFF;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.05rem;
+    }
+    
+    .location-info p {
+        margin: 0.75rem 0 0 0;
+        color: #555;
+        font-weight: 500;
+    }
+    
+    .submit-btn {
+        width: 100%;
+        padding: 1.25rem;
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin-top: 2rem;
+        background: linear-gradient(135deg, #5F5FFF, #EC4899);
+        border: none;
+        border-radius: 14px;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        box-shadow: 0 8px 25px rgba(95, 95, 255, 0.3);
+    }
+    
+    .submit-btn:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 15px 40px rgba(95, 95, 255, 0.4);
+    }
+    
+    .submit-btn:active {
+        transform: translateY(-2px);
+    }
+    
+    .submit-btn i {
+        font-size: 1.3rem;
+    }
+    
+    .info-box {
+        background: linear-gradient(135deg, #fff9e6, #fffbf0);
+        border-left: 4px solid #FFB300;
+        padding: 1.25rem 1.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(255, 179, 0, 0.1);
+    }
+    
+    .info-box strong {
+        color: #FF8F00;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+        font-size: 1.05rem;
+    }
+    
+    .info-box ol {
+        margin: 0.75rem 0 0 1.5rem;
+        padding: 0;
+        color: #666;
+        line-height: 1.8;
+    }
+    
+    .info-box ol li {
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .info-box a {
+        color: #5F5FFF;
+        font-weight: 700;
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+        transition: border-color 0.3s;
+    }
+    
+    .info-box a:hover {
+        border-bottom-color: #5F5FFF;
+    }
+    
+    .required {
+        color: #E53935;
+        font-weight: 900;
+    }
+    
+    /* Mobile Optimization */
+    @media (max-width: 768px) {
+        .report-form-container {
+            margin: 1rem;
+            padding: 1.5rem;
+            border-radius: 20px;
+        }
+        
+        .form-header h1 {
+            font-size: 2rem;
+        }
+        
+        .form-header p {
+            font-size: 1rem;
+        }
+        
+        .photo-upload {
+            padding: 2rem 1rem;
+        }
+        
+        .photo-upload i {
+            font-size: 3rem;
+        }
+        
+        .photo-upload p {
+            font-size: 1rem;
+        }
+        
+        #miniMap {
+            height: 250px;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 0.9rem 1rem;
+            font-size: 16px; /* Prevents zoom on iOS */
+        }
+        
+        .submit-btn {
+            padding: 1.1rem;
+            font-size: 1.1rem;
+        }
+        
+        .info-box {
+            padding: 1rem;
+            font-size: 0.95rem;
+        }
+        
+        .info-box ol {
+            padding-left: 1.2rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .report-form-container {
+            margin: 0.5rem;
+            padding: 1.25rem;
+        }
+        
+        .form-header {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .photo-preview-actions {
+            flex-direction: column;
+        }
+        
+        .photo-preview-actions button {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="report-form-container">
+        <div class="form-header">
+            <h1>📸 Сообщить о проблеме</h1>
+            <p>Помогите сделать Алматы чище — отметьте точку загрязнения</p>
+        </div>
+        
+        <div class="info-box">
+            <strong>ℹ️ Как это работает:</strong>
+            <ol style="margin: 0.5rem 0 0 1.5rem; padding: 0;">
+                <li>Сделайте фото крупного скопления мусора</li>
+                <li>Укажите местоположение на карте</li>
+                <li>AI проверит фото и автоматически одобрит репорт</li>
+                <li>Получите баллы за активное участие!</li>
+            </ol>
+        </div>
+        
+        <form method="POST" enctype="multipart/form-data" id="reportForm">
+            <!-- Photo Upload -->
+            <div class="form-group">
+                <label>
+                    <i class="bi bi-camera-fill"></i>
+                    Фотография <span class="required">*</span>
+                </label>
+                <div class="photo-upload" id="photoUploadArea" onclick="document.getElementById('photoInput').click()">
+                    <div class="photo-upload-content">
+                        <i class="bi bi-camera"></i>
+                        <p>Нажмите для выбора фото</p>
+                        <small>или перетащите изображение сюда</small>
+                    </div>
+                    <input type="file" id="photoInput" name="photo" accept="image/*" capture="environment" required onchange="previewPhoto(event)">
+                </div>
+                <div id="photoPreviewWrapper" class="photo-preview-wrapper">
+                    <img id="photoPreview" class="photo-preview" alt="Preview">
+                    <div class="photo-preview-actions">
+                        <button type="button" class="change-photo" onclick="document.getElementById('photoInput').click()">
+                            <i class="bi bi-arrow-repeat"></i> Изменить
+                        </button>
+                        <button type="button" class="remove-photo" onclick="removePhoto()">
+                            <i class="bi bi-trash"></i> Удалить
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Location -->
+            <div class="form-group">
+                <label>
+                    <i class="bi bi-geo-alt-fill"></i>
+                    Местоположение <span class="required">*</span>
+                </label>
+                <button type="button" class="location-btn" onclick="getLocation()">
+                    <i class="bi bi-crosshair"></i>
+                    Определить моё местоположение
+                </button>
+                <div id="miniMap"></div>
+                <input type="hidden" id="latitude" name="latitude" required>
+                <input type="hidden" id="longitude" name="longitude" required>
+                
+                <div class="location-info" id="locationInfo">
+                    <strong>
+                        <i class="bi bi-check-circle-fill"></i>
+                        Местоположение определено
+                    </strong>
+                    <p id="locationText"></p>
+                </div>
+            </div>
+            
+            <!-- District -->
+            <div class="form-group">
+                <label>
+                    <i class="bi bi-building"></i>
+                    Район
+                </label>
+                <select name="district" id="district">
+                    <option value="">Выберите район</option>
+                    <option value="Алмалинский">Алмалинский</option>
+                    <option value="Ауэзовский">Ауэзовский</option>
+                    <option value="Бостандыкский">Бостандыкский</option>
+                    <option value="Жетысуский">Жетысуский</option>
+                    <option value="Медеуский">Медеуский</option>
+                    <option value="Наурызбайский">Наурызбайский</option>
+                    <option value="Турксибский">Турксибский</option>
+                    <option value="Алатауский">Алатауский</option>
+                </select>
+            </div>
+            
+            <!-- Address -->
+            <div class="form-group">
+                <label>
+                    <i class="bi bi-signpost-2"></i>
+                    Адрес (улица, ориентир)
+                </label>
+                <input type="text" name="address" id="address" placeholder="Например: ул. Абая, д. 150">
+            </div>
+            
+            <!-- Description -->
+            <div class="form-group">
+                <label>
+                    <i class="bi bi-chat-left-text"></i>
+                    Описание проблемы
+                </label>
+                <textarea name="description" placeholder="Опишите, что вы увидели (необязательно, но даёт +5 баллов)"></textarea>
+            </div>
+            
+            {% if not current_user.is_authenticated %}
+            <div class="info-box" style="background: #e8f5e9; border-left-color: var(--green-lime);">
+                <strong>💡 Совет:</strong> <a href="{{ url_for('auth.register') }}">Зарегистрируйтесь</a>, чтобы получать баллы и участвовать в лидерборде!
+            </div>
+            {% endif %}
+            
+            <button type="submit" class="btn btn-primary submit-btn">
+                <i class="bi bi-send-fill"></i> Отправить сообщение
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let map;
+    let marker;
+    
+    // Photo preview
+    function previewPhoto(event) {
+        const file = event.target.files[0];
+        const preview = document.getElementById('photoPreview');
+        const wrapper = document.getElementById('photoPreviewWrapper');
+        const uploadArea = document.getElementById('photoUploadArea');
+        
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                wrapper.style.display = 'block';
+                uploadArea.style.display = 'none';
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    // Remove photo
+    function removePhoto() {
+        const preview = document.getElementById('photoPreview');
+        const wrapper = document.getElementById('photoPreviewWrapper');
+        const uploadArea = document.getElementById('photoUploadArea');
+        const input = document.getElementById('photoInput');
+        
+        preview.src = '';
+        wrapper.style.display = 'none';
+        uploadArea.style.display = 'block';
+        input.value = '';
+    }
+    
+    // Get user location
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition, showError);
+        } else {
+            alert("Геолокация не поддерживается вашим браузером");
+        }
+    }
+    
+    function showPosition(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lon;
+        document.getElementById('locationInfo').style.display = 'block';
+        document.getElementById('locationText').textContent = `Координаты: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+        
+        // Initialize map if not exists
+        if (!map) {
+            map = L.map('miniMap').setView([lat, lon], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
+        } else {
+            map.setView([lat, lon], 15);
+        }
+        
+        // Add/update marker
+        if (marker) {
+            marker.setLatLng([lat, lon]);
+        } else {
+            marker = L.marker([lat, lon], { draggable: true }).addTo(map);
+            
+            // Update coordinates on marker drag
+            marker.on('dragend', function(e) {
+                const pos = e.target.getLatLng();
+                document.getElementById('latitude').value = pos.lat;
+                document.getElementById('longitude').value = pos.lng;
+                document.getElementById('locationText').textContent = `Координаты: ${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`;
+            });
+        }
+        
+        // Reverse geocoding (get address from coordinates)
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.address) {
+                    const address = [
+                        data.address.road,
+                        data.address.house_number
+                    ].filter(Boolean).join(', ');
+                    
+                    if (address) {
+                        document.getElementById('address').value = address;
+                    }
+                    
+                    // Try to determine district
+                    const suburb = data.address.suburb || data.address.neighbourhood || '';
+                    const districtSelect = document.getElementById('district');
+                    for (let option of districtSelect.options) {
+                        if (option.value && suburb.includes(option.value.split('ский')[0])) {
+                            districtSelect.value = option.value;
+                            break;
+                        }
+                    }
+                }
+            })
+            .catch(error => console.error('Geocoding error:', error));
+    }
+    
+    function showError(error) {
+        const messages = {
+            1: "Вы не разрешили доступ к геолокации",
+            2: "Местоположение недоступно",
+            3: "Превышено время ожидания"
+        };
+        alert(messages[error.code] || "Ошибка определения местоположения");
+    }
+    
+    // Form validation
+    document.getElementById('reportForm').addEventListener('submit', function(e) {
+        const lat = document.getElementById('latitude').value;
+        const lon = document.getElementById('longitude').value;
+        
+        if (!lat || !lon) {
+            e.preventDefault();
+            alert('Пожалуйста, укажите местоположение на карте');
+            return false;
+        }
+    });
+</script>
+{% endblock %}
+

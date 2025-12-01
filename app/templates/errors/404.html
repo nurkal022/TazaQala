@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Страница не найдена{% endblock %}
+
+{% block content %}
+<div class="container" style="text-align: center; padding: 4rem 2rem;">
+    <div style="font-size: 8rem; margin-bottom: 2rem;">🔍</div>
+    <h1 style="font-size: 3rem; margin-bottom: 1rem; color: var(--graphite);">404 - Страница не найдена</h1>
+    <p style="font-size: 1.2rem; color: #666; margin-bottom: 2rem;">
+        К сожалению, запрашиваемая страница не существует.
+    </p>
+    <p style="color: #999; margin-bottom: 2rem;">
+        Возможно, вы перешли по устаревшей ссылке или ввели неправильный адрес.
+    </p>
+    <div>
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary" style="margin-right: 1rem;">
+            <i class="bi bi-house"></i> На главную
+        </a>
+        <a href="{{ url_for('main.map') }}" class="btn btn-outline">
+            <i class="bi bi-map"></i> Открыть карту
+        </a>
+    </div>
+</div>
+{% endblock %}
+

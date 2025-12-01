@@ -1,0 +1,378 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Статистика - Админ-панель{% endblock %}
+
+{% block header_title %}Статистика и аналитика{% endblock %}
+
+{% block extra_css %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+    .stats-grid-admin {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card-admin {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        border-left: 4px solid;
+        transition: transform 0.2s;
+    }
+    
+    .stat-card-admin:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    
+    .stat-card-admin.blue { border-left-color: var(--admin-blue); }
+    .stat-card-admin.green { border-left-color: var(--admin-green); }
+    .stat-card-admin.yellow { border-left-color: var(--admin-yellow); }
+    .stat-card-admin.red { border-left-color: var(--admin-red); }
+    
+    .stat-value-admin {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--admin-text);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label-admin {
+        font-size: 0.95rem;
+        color: var(--admin-text-light);
+        font-weight: 600;
+    }
+    
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .chart-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .chart-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--admin-text);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    
+    .chart-container-large {
+        height: 400px;
+    }
+    
+    .district-table-admin {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+    
+    .district-table-admin thead {
+        background: #f8fafc;
+    }
+    
+    .district-table-admin th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 700;
+        color: var(--admin-text);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .district-table-admin td {
+        padding: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .district-table-admin tbody tr:hover {
+        background: #f8fafc;
+    }
+    
+    .progress-bar-admin {
+        height: 10px;
+        background: #e2e8f0;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+    
+    .progress-fill-admin {
+        height: 100%;
+        background: linear-gradient(90deg, var(--admin-green), var(--admin-blue));
+        border-radius: 999px;
+        transition: width 0.8s ease;
+    }
+    
+    @media (max-width: 1024px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Основные метрики -->
+<div class="stats-grid-admin">
+    <div class="stat-card-admin blue">
+        <div class="stat-value-admin">{{ stats.total_reports }}</div>
+        <div class="stat-label-admin">Всего репортов</div>
+    </div>
+    
+    <div class="stat-card-admin green">
+        <div class="stat-value-admin">{{ stats.cleaned }}</div>
+        <div class="stat-label-admin">Убрано</div>
+    </div>
+    
+    <div class="stat-card-admin yellow">
+        <div class="stat-value-admin">{{ stats.pending }}</div>
+        <div class="stat-label-admin">На проверке</div>
+    </div>
+    
+    <div class="stat-card-admin red">
+        <div class="stat-value-admin">{{ stats.rejected }}</div>
+        <div class="stat-label-admin">Отклонено</div>
+    </div>
+</div>
+
+<!-- Графики -->
+<div class="charts-grid">
+    <!-- График активности по дням -->
+    <div class="chart-card">
+        <h2 class="chart-title">
+            <i class="bi bi-graph-up"></i> Активность по дням
+        </h2>
+        <div class="chart-container-large">
+            <canvas id="dailyActivityChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Распределение по статусам -->
+    <div class="chart-card">
+        <h2 class="chart-title">
+            <i class="bi bi-pie-chart"></i> Распределение по статусам
+        </h2>
+        <div class="chart-container">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- График по районам и типы мусора -->
+<div class="charts-grid">
+    <!-- График по районам -->
+    <div class="chart-card">
+        <h2 class="chart-title">
+            <i class="bi bi-bar-chart"></i> Репорты по районам
+        </h2>
+        <div class="chart-container-large">
+            <canvas id="districtChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Типы мусора -->
+    <div class="chart-card">
+        <h2 class="chart-title">
+            <i class="bi bi-pie-chart-fill"></i> Типы мусора
+        </h2>
+        <div class="chart-container">
+            <canvas id="trashTypeChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Статистика по районам (таблица) -->
+<div class="chart-card">
+    <h2 class="chart-title">
+        <i class="bi bi-table"></i> Детальная статистика по районам
+    </h2>
+    <table class="district-table-admin">
+        <thead>
+            <tr>
+                <th>Район</th>
+                <th>Всего</th>
+                <th>Убрано</th>
+                <th>Процент</th>
+                <th>Прогресс</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for district in district_stats|sort(attribute='total', reverse=True) %}
+            {% if district.district %}
+            {% set cleanup_rate = (district.cleaned / district.total * 100) | round(1) if district.total > 0 else 0 %}
+            <tr>
+                <td><strong>{{ district.district }}</strong></td>
+                <td>{{ district.total }}</td>
+                <td style="color: var(--admin-green); font-weight: 700;">{{ district.cleaned }}</td>
+                <td>{{ cleanup_rate }}%</td>
+                <td style="min-width: 150px;">
+                    <div class="progress-bar-admin">
+                        <div class="progress-fill-admin" style="width: {{ cleanup_rate }}%;"></div>
+                    </div>
+                </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Данные для графиков
+    const dailyData = {{ daily_stats|tojson }};
+    const districtData = {{ district_chart_data|tojson }};
+    const trashTypeData = {{ trash_type_chart_data|tojson }};
+    
+    // График активности по дням
+    const dailyCtx = document.getElementById('dailyActivityChart').getContext('2d');
+    new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+            labels: dailyData.labels,
+            datasets: [{
+                label: 'Новых репортов',
+                data: dailyData.values,
+                borderColor: '#059669',
+                backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+    
+    // График распределения по статусам
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Подтверждено', 'Убрано', 'На проверке', 'Отклонено'],
+            datasets: [{
+                data: [
+                    {{ stats.confirmed }},
+                    {{ stats.cleaned }},
+                    {{ stats.pending }},
+                    {{ stats.rejected }}
+                ],
+                backgroundColor: [
+                    '#3b82f6',
+                    '#059669',
+                    '#f59e0b',
+                    '#dc2626'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // График по районам
+    const districtCtx = document.getElementById('districtChart').getContext('2d');
+    new Chart(districtCtx, {
+        type: 'bar',
+        data: {
+            labels: districtData.labels,
+            datasets: [{
+                label: 'Всего репортов',
+                data: districtData.totals,
+                backgroundColor: '#3b82f6'
+            }, {
+                label: 'Убрано',
+                data: districtData.cleaned,
+                backgroundColor: '#059669'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+    
+    // График типов мусора
+    const trashTypeCtx = document.getElementById('trashTypeChart').getContext('2d');
+    new Chart(trashTypeCtx, {
+        type: 'pie',
+        data: {
+            labels: trashTypeData.labels,
+            datasets: [{
+                data: trashTypeData.values,
+                backgroundColor: [
+                    '#3b82f6',
+                    '#059669',
+                    '#f59e0b',
+                    '#8b5cf6',
+                    '#ec4899',
+                    '#14b8a6'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
+

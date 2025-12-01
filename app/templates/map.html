@@ -1,0 +1,723 @@
+{% extends "base.html" %}
+
+{% block title %}Карта загрязнений - Чистый Алматы{% endblock %}
+
+{% block extra_css %}
+<style>
+    .map-page {
+        min-height: calc(100vh - 80px);
+        display: flex;
+        flex-direction: column;
+        background: linear-gradient(135deg, #f3f8ff 0%, #f5fff4 100%);
+    }
+
+    .map-hero {
+        padding: 2.5rem 2rem 1.5rem;
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 2rem;
+    }
+
+    .map-hero-card {
+        background: white;
+        border-radius: 28px;
+        padding: 2rem;
+        box-shadow: 0 25px 60px rgba(29, 78, 216, 0.08);
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+    }
+
+    .map-hero-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at bottom right, rgba(105, 240, 174, 0.3), transparent 50%);
+        z-index: -1;
+    }
+
+    .map-hero-card .eyebrow {
+        font-weight: 700;
+        color: #25c681;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 0.8rem;
+    }
+
+    .map-hero-card h1 {
+        margin: 0.5rem 0 1rem;
+        font-size: 2.6rem;
+        color: var(--graphite);
+        line-height: 1.2;
+    }
+
+    .map-hero-card p {
+        color: #637083;
+        font-size: 1.05rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .hero-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.85rem 1.5rem;
+        border-radius: 16px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.3s, box-shadow 0.3s;
+        font-size: 0.95rem;
+        text-decoration: none;
+    }
+
+    .hero-btn.primary {
+        background: linear-gradient(120deg, #2ecc71, #1abc9c);
+        color: white;
+        box-shadow: 0 15px 30px rgba(46, 204, 113, 0.3);
+    }
+
+    .hero-btn.secondary {
+        background: rgba(46, 204, 113, 0.12);
+        color: #199068;
+    }
+
+    .hero-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .map-hero-card.stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
+
+    .stat-pill {
+        background: #f9fbff;
+        border-radius: 20px;
+        padding: 1rem 1.2rem;
+        border: 1px solid rgba(99, 112, 131, 0.08);
+    }
+
+    .stat-pill strong {
+        display: block;
+        font-size: 2rem;
+        color: var(--graphite);
+        line-height: 1.1;
+    }
+
+    .stat-pill span {
+        color: #6e7b90;
+        font-size: 0.9rem;
+    }
+
+    .map-toolbar {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        margin: 0 2rem 1.5rem;
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 20px 45px rgba(35, 78, 90, 0.08);
+    }
+
+    .map-filters {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        padding: 0.65rem 1.3rem;
+        border: 1px solid rgba(22, 101, 216, 0.1);
+        background: white;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #4b5563;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.05);
+    }
+
+    .filter-btn i {
+        font-size: 1rem;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+        border-color: #1abc9c;
+        background: rgba(26, 188, 156, 0.12);
+        color: #0e8f72;
+        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+    }
+
+    .toolbar-actions {
+        display: flex;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+    }
+
+    .toolbar-btn {
+        border-radius: 14px;
+        padding: 0.65rem 1.2rem;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        text-decoration: none;
+    }
+
+    .toolbar-btn.neutral {
+        background: rgba(15, 23, 42, 0.06);
+        color: #1f2937;
+    }
+
+    .toolbar-btn.cta {
+        background: linear-gradient(120deg, #ff5f6d, #ffc371);
+        color: white;
+        box-shadow: 0 15px 35px rgba(255, 95, 109, 0.35);
+    }
+
+    .map-wrapper {
+        position: relative;
+        flex: 1;
+        margin: 0 2rem 2rem;
+        border-radius: 32px;
+        overflow: hidden;
+        box-shadow: 0 30px 60px rgba(15, 23, 42, 0.15);
+        background: white;
+    }
+
+    .map-container {
+        height: calc(100vh - 320px);
+        min-height: 420px;
+        position: relative;
+    }
+
+    #fullMap {
+        width: 100%;
+        height: 100%;
+    }
+
+    .legend {
+        background: rgba(15, 23, 42, 0.8);
+        color: white;
+        padding: 1.4rem;
+        border-radius: 18px;
+        position: absolute;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+        min-width: 220px;
+        backdrop-filter: blur(6px);
+    }
+
+    .legend h4 {
+        margin: 0 0 0.8rem;
+        font-size: 1rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        margin-bottom: 0.7rem;
+        font-weight: 500;
+    }
+
+    .legend-color {
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 10px 18px rgba(0, 0, 0, 0.2);
+    }
+
+    .map-info-card {
+        position: absolute;
+        top: 30px;
+        left: 30px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 1.2rem 1.4rem;
+        border-radius: 18px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 20px 35px rgba(15, 23, 42, 0.15);
+        max-width: 320px;
+    }
+
+    .map-info-card h4 {
+        margin: 0 0 0.5rem;
+        font-size: 1.05rem;
+        color: var(--graphite);
+    }
+
+    .map-info-card p {
+        margin: 0;
+        color: #607189;
+        font-size: 0.95rem;
+    }
+
+    .custom-marker {
+        background: transparent !important;
+        border: none !important;
+    }
+    
+    .custom-marker div {
+        display: block !important;
+    }
+
+    .leaflet-popup-content-wrapper {
+        border-radius: 20px;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .leaflet-popup-content {
+        margin: 0;
+        padding: 0;
+        width: auto !important;
+    }
+
+    .leaflet-container a.leaflet-popup-close-button {
+        color: #64748b;
+        font-size: 1.5rem;
+        padding: 8px;
+        transition: color 0.2s;
+    }
+
+    .leaflet-container a.leaflet-popup-close-button:hover {
+        color: #1f2937;
+    }
+
+    .clean-popup .leaflet-popup-content-wrapper {
+        background: white;
+    }
+
+    .empty-state {
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.8rem;
+        color: #455066;
+        font-weight: 600;
+        text-align: center;
+        padding: 2rem;
+        z-index: 500;
+        display: none;
+    }
+
+    .empty-state.show {
+        display: flex;
+    }
+
+    @media (max-width: 1100px) {
+        .map-hero {
+            grid-template-columns: 1fr;
+        }
+
+        .map-toolbar {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .map-wrapper {
+            margin: 0 1.5rem 1.5rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .map-hero {
+            padding: 1.5rem;
+        }
+
+        .map-hero-card {
+            padding: 1.5rem;
+        }
+
+        .map-hero-card h1 {
+            font-size: 2rem;
+        }
+
+        .map-toolbar {
+            margin: 0 1.5rem 1rem;
+        }
+
+        .map-wrapper {
+            margin: 0 1rem 1.5rem;
+        }
+
+        .map-container {
+            height: 65vh;
+        }
+
+        .legend,
+        .map-info-card {
+            position: relative;
+            inset: auto;
+            margin: 1rem;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+
+        .empty-state {
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="map-page">
+    <section class="map-hero">
+        <div class="map-hero-card">
+            <p class="eyebrow">городская экосистема</p>
+            <h1>Карта загрязнений Алматы</h1>
+            <p>
+                Следим за чистотой районов, отмечаем проблемные точки и фиксируем успехи очистки.
+                Выберите нужный фильтр или добавьте своё наблюдение — вместе мы ускорим изменения.
+            </p>
+            <div class="hero-actions">
+                <a href="{{ url_for('reports.new_report') }}" class="hero-btn primary">
+                    <i class="bi bi-camera-fill"></i> Сообщить о проблеме
+                </a>
+                <a href="{{ url_for('main.leaderboard') }}" class="hero-btn secondary">
+                    <i class="bi bi-trophy-fill"></i> Лидерборд
+                </a>
+            </div>
+        </div>
+        <div class="map-hero-card stats">
+            <div class="stat-pill">
+                <strong>{{ stats.total_reports }}</strong>
+                <span>всего репортов</span>
+            </div>
+            <div class="stat-pill">
+                <strong>{{ stats.confirmed }}</strong>
+                <span>подтверждено</span>
+            </div>
+            <div class="stat-pill">
+                <strong>{{ stats.cleaned }}</strong>
+                <span>убрано</span>
+            </div>
+            <div class="stat-pill">
+                <strong>{{ stats.pending }}</strong>
+                <span>на проверке</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="map-toolbar">
+        <div class="map-filters">
+            <button class="filter-btn active" data-filter="all" onclick="filterReports('all', this)">
+                <i class="bi bi-globe2"></i>
+                Все <span id="count-all">({{ stats.total_reports }})</span>
+            </button>
+            <button class="filter-btn" data-filter="confirmed" onclick="filterReports('confirmed', this)">
+                <i class="bi bi-shield-check"></i>
+                Подтверждённые <span id="count-confirmed">({{ stats.confirmed }})</span>
+            </button>
+            <button class="filter-btn" data-filter="cleaned" onclick="filterReports('cleaned', this)">
+                <i class="bi bi-stars"></i>
+                Убранные <span id="count-cleaned">({{ stats.cleaned }})</span>
+            </button>
+            <button class="filter-btn" data-filter="pending" onclick="filterReports('pending', this)">
+                <i class="bi bi-hourglass-split"></i>
+                На проверке <span id="count-pending">({{ stats.pending }})</span>
+            </button>
+        </div>
+        <div class="toolbar-actions">
+            <button class="toolbar-btn neutral" onclick="map.setView([43.2220, 76.8512], 12)">
+                <i class="bi bi-compass"></i> Центр Алматы
+            </button>
+            <a href="{{ url_for('reports.new_report') }}" class="toolbar-btn cta">
+                <i class="bi bi-plus-lg"></i> Добавить репорт
+            </a>
+        </div>
+    </div>
+
+    <div class="map-wrapper">
+        <div class="map-container">
+            <div id="fullMap"></div>
+            <div class="empty-state" id="emptyState">
+                <i class="bi bi-emoji-smile" style="font-size:2rem;"></i>
+                В этом фильтре пока нет репортов. Попробуйте выбрать другой статус.
+            </div>
+            <div class="legend">
+                <h4>Легенда</h4>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #E53935; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>
+                    <span>Подтверждено</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #66BB6A; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>
+                    <span>Убрано</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #FFB300; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>
+                    <span>На проверке</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #9E9E9E; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>
+                    <span>Отклонено</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Границы Алматы (расширенные)
+    const ALMATY_CENTER = [43.2220, 76.8512];
+    const ALMATY_BOUNDS = [[42.8, 76.4], [43.5, 77.3]];
+    
+    // Initialize map centered on Almaty
+    const map = L.map('fullMap').setView(ALMATY_CENTER, 12);
+    
+    // Ограничиваем карту границами Алматы (мягкие границы)
+    map.setMaxBounds(ALMATY_BOUNDS);
+    map.setMinZoom(10);
+    
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19
+    }).addTo(map);
+    
+    let markers = [];
+    let allReports = [];
+    const emptyState = document.getElementById('emptyState');
+    
+    // Load reports
+    async function loadReports(status = '') {
+        try {
+            const url = status ? `/api/reports?status=${status}` : '/api/reports';
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            allReports = data.reports || [];
+            console.log(`Загружено ${allReports.length} репортов`);
+            
+            // Отладочная информация о координатах
+            if (allReports.length > 0) {
+                const coords = allReports.map(r => ({lat: r.latitude, lon: r.longitude}));
+                console.log('Примеры координат:', coords.slice(0, 5));
+                const latRange = [Math.min(...coords.map(c => c.lat)), Math.max(...coords.map(c => c.lat))];
+                const lonRange = [Math.min(...coords.map(c => c.lon)), Math.max(...coords.map(c => c.lon))];
+                console.log(`Диапазон координат: lat [${latRange[0]}, ${latRange[1]}], lon [${lonRange[0]}, ${lonRange[1]}]`);
+            }
+            
+            displayReports(allReports);
+        } catch (error) {
+            console.error('Error loading reports:', error);
+            emptyState.classList.add('show');
+        }
+    }
+    
+    // Display reports on map
+    function displayReports(reports) {
+        // Clear existing markers
+        markers.forEach(marker => map.removeLayer(marker));
+        markers = [];
+        
+        if (reports.length === 0) {
+            emptyState.classList.add('show');
+            return;
+        }
+        
+        emptyState.classList.remove('show');
+        
+        let markersAdded = 0;
+        let markersSkipped = 0;
+        
+        // Добавляем все маркеры без дополнительной фильтрации (фильтрация уже в API)
+        reports.forEach(report => {
+            // Проверяем валидность координат
+            if (!report.latitude || !report.longitude || 
+                isNaN(report.latitude) || isNaN(report.longitude)) {
+                console.warn('Пропущен репорт с невалидными координатами:', report.id);
+                markersSkipped++;
+                return;
+            }
+            
+            // Determine marker color based on status - простые яркие цвета
+            let color = '#E53935'; // red for confirmed
+            let statusText = 'Подтверждено';
+            if (report.status === 'cleaned') {
+                color = '#66BB6A'; // green
+                statusText = 'Убрано';
+            }
+            if (report.status === 'pending') {
+                color = '#FFB300'; // yellow
+                statusText = 'На проверке';
+            }
+            if (report.status === 'rejected') {
+                color = '#9E9E9E'; // gray
+                statusText = 'Отклонено';
+            }
+            
+            const confidence = report.ai_confidence ? `${Math.round(report.ai_confidence * 100)}%` : '—';
+            const author = report.author || (report.is_anonymous ? 'Аноним' : 'Аноним');
+            const reportCategory = report.report_category || report.trash_type || 'trash';
+            
+            // Названия категорий на русском
+            const categoryNames = {
+                'trash': '🗑️ Мусор',
+                'vandalism': '🎨 Вандализм',
+                'nature_damage': '🌳 Повреждение природы',
+                'illegal_dumping': '🚛 Незаконный сброс',
+                'construction_waste': '🏗️ Строительный мусор',
+                'hazardous_waste': '⚠️ Опасные отходы',
+                'other': '📋 Другое'
+            };
+            const categoryName = categoryNames[reportCategory] || '📋 Другое';
+            
+            // Формируем путь к фото
+            // Для тестовых репортов используем буферное фото image.png
+            let photoPath = null;
+            if (report.photo_url) {
+                photoPath = report.photo_url;
+            } else if (report.photo_path) {
+                if (report.photo_path.startsWith('http')) {
+                    photoPath = report.photo_path;
+                } else if (report.photo_path === 'image.png') {
+                    // Буферное фото для тестовых репортов
+                    photoPath = `/static/image.png`;
+                } else if (report.photo_path.startsWith('uploads/')) {
+                    photoPath = `/static/${report.photo_path}`;
+                } else {
+                    photoPath = `/static/uploads/${report.photo_path}`;
+                }
+            } else {
+                // Если фото нет, используем буферное фото по умолчанию
+                photoPath = `/static/image.png`;
+            }
+            
+            // Форматируем дату
+            const createdDate = report.created_at ? new Date(report.created_at).toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            }) : '—';
+
+            // Простой цветной маркер - круглая точка, фиксированная позиция
+            const icon = L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="width: 18px; height: 18px; background-color: ${color}; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>`,
+                iconSize: [18, 18],
+                iconAnchor: [9, 9],
+                popupAnchor: [0, -9]
+            });
+            
+            const popupContent = `
+                <div style="max-width: 340px; font-family: 'Nunito Sans', sans-serif;">
+                    ${photoPath ? `<img src="${photoPath}" style="width: 100%; height: 180px; border-radius: 12px; margin-bottom: 12px; object-fit: cover; cursor: pointer;" onclick="window.open('${photoPath}', '_blank')" onerror="this.style.display='none'">` : ''}
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${color}; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+                        <h4 style="margin: 0; font-size: 1.15rem; color: #0f172a; font-weight: 700;">${report.district || 'Алматы'}</h4>
+                    </div>
+                    ${report.address ? `<p style="margin: 0 0 10px 0; color: #64748b; font-size: 0.9rem;"><i class="bi bi-geo-alt"></i> ${report.address}</p>` : ''}
+                    ${report.description ? `<p style="margin: 0 0 12px 0; color: #475569; line-height: 1.5;">${report.description}</p>` : ''}
+                    <div style="background: #f8fafc; border-radius: 10px; padding: 12px; margin-bottom: 12px; font-size: 0.9rem; color: #475569;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <div><strong>Статус:</strong><br>${getStatusText(report.status)}</div>
+                            <div><strong>Тип нарушения:</strong><br>${categoryName}</div>
+                            <div><strong>AI достоверность:</strong><br>${confidence}</div>
+                            <div><strong>Дата:</strong><br>${createdDate}</div>
+                        </div>
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
+                            <strong>Автор:</strong> ${author}
+                        </div>
+                    </div>
+                    <a href="/report/${report.id}" style="display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 10px 16px; background: linear-gradient(120deg, #2ecc71, #1abc9c); color: white; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 0.95rem; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                        Подробнее <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            `;
+            
+            const marker = L.marker([report.latitude, report.longitude], { 
+                icon: icon,
+                interactive: true
+            })
+                .addTo(map)
+                .bindPopup(popupContent, {
+                    className: 'clean-popup',
+                    maxWidth: 360,
+                    closeButton: true
+                });
+            
+            markers.push(marker);
+            markersAdded++;
+        });
+        
+        console.log(`Добавлено маркеров: ${markersAdded}, пропущено: ${markersSkipped}`);
+        
+        // Если есть маркеры, подгоняем карту под них
+        if (markers.length > 0) {
+            const group = new L.featureGroup(markers);
+            if (markers.length === 1) {
+                map.setView([markers[0].getLatLng().lat, markers[0].getLatLng().lng], 15);
+            } else {
+                map.fitBounds(group.getBounds().pad(0.1), { maxZoom: 13 });
+            }
+            console.log(`Карта настроена на ${markers.length} маркеров`);
+        } else {
+            console.warn('Нет маркеров для отображения!');
+        }
+    }
+    
+    function getStatusText(status) {
+        const statusMap = {
+            'confirmed': '✅ Подтверждено',
+            'cleaned': '🎉 Убрано',
+            'pending': '⏳ На проверке',
+            'rejected': '❌ Отклонено'
+        };
+        return statusMap[status] || status;
+    }
+    
+    // Filter reports
+    function filterReports(status, button) {
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        if (button) {
+            button.classList.add('active');
+        }
+        loadReports(status === 'all' ? '' : status);
+    }
+    
+    // Initial load with default filter
+    const defaultFilterBtn = document.querySelector('.filter-btn[data-filter="all"]');
+    filterReports('all', defaultFilterBtn);
+</script>
+{% endblock %}
+

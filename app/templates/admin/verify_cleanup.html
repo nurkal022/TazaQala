@@ -1,0 +1,332 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Проверка уборки - Админ-панель{% endblock %}
+
+{% block extra_css %}
+<style>
+    .verification-page {
+        padding: 2rem 0;
+    }
+
+    .verification-header {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .verification-header h1 {
+        font-size: 1.8rem;
+        color: var(--graphite);
+        margin-bottom: 0.5rem;
+    }
+
+    .report-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+        color: #666;
+        font-weight: 600;
+    }
+
+    .info-value {
+        font-size: 1rem;
+        color: var(--graphite);
+    }
+
+    .photos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .photo-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .photo-header {
+        padding: 1rem;
+        background: var(--bg-light);
+        border-bottom: 2px solid #e0e0e0;
+    }
+
+    .photo-header h3 {
+        font-size: 1.1rem;
+        color: var(--graphite);
+        margin: 0;
+    }
+
+    .photo-container {
+        position: relative;
+        width: 100%;
+        height: 400px;
+        background: #f5f5f5;
+    }
+
+    .photo-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .photo-footer {
+        padding: 1rem;
+        background: var(--bg-light);
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .actions-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .actions-card h2 {
+        font-size: 1.3rem;
+        margin-bottom: 1.5rem;
+        color: var(--graphite);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-approve {
+        background: var(--green-lime);
+        color: white;
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-approve:hover {
+        background: #5cb860;
+        transform: translateY(-2px);
+    }
+
+    .btn-reject {
+        background: var(--apple-red);
+        color: white;
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-reject:hover {
+        background: #d32f2f;
+        transform: translateY(-2px);
+    }
+
+    .btn-back {
+        background: #666;
+        color: white;
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+
+    .btn-back:hover {
+        background: #555;
+        color: white;
+    }
+
+    .reject-form {
+        margin-top: 1rem;
+        display: none;
+    }
+
+    .reject-form.active {
+        display: block;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--graphite);
+    }
+
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 1rem;
+        resize: vertical;
+    }
+
+    .cleaner-info {
+        background: #e3f2fd;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="verification-page">
+    <div class="container">
+        <div class="verification-header">
+            <h1>🔍 Проверка уборки репорта #{{ report.id }}</h1>
+
+            <div class="report-info">
+                <div class="info-item">
+                    <span class="info-label">Локация</span>
+                    <span class="info-value">{{ report.address or 'Не указан' }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Район</span>
+                    <span class="info-value">{{ report.district or 'Не указан' }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Дата создания</span>
+                    <span class="info-value">{{ report.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Дата уборки</span>
+                    <span class="info-value">{{ report.cleaned_at.strftime('%d.%m.%Y %H:%M') if report.cleaned_at else
+                        'Не указана' }}</span>
+                </div>
+            </div>
+
+            {% if report.cleaned_by %}
+            <div class="cleaner-info">
+                <strong>Клинер:</strong> {{ report.cleaned_by.full_name or report.cleaned_by.username }}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="photos-grid">
+            <!-- Фото "До" -->
+            <div class="photo-card">
+                <div class="photo-header">
+                    <h3>📸 Фото "До" (Оригинал)</h3>
+                </div>
+                <div class="photo-container">
+                    <img src="{{ report.photo_path | report_photo_url }}" alt="Фото до уборки"
+                         onerror="this.src='{{ url_for('static', filename='image.png') }}'">
+                </div>
+                <div class="photo-footer">
+                    Оригинальное фото репорта
+                </div>
+            </div>
+
+            <!-- Фото "После" -->
+            <div class="photo-card">
+                <div class="photo-header">
+                    <h3>✅ Фото "После" (Результат)</h3>
+                </div>
+                <div class="photo-container">
+                    <img src="{{ report.cleaned_photo_path | cleaned_photo_url }}"
+                        alt="Фото после уборки">
+                </div>
+                <div class="photo-footer">
+                    Фото очищенной территории
+                </div>
+            </div>
+
+            <!-- Документ об утилизации -->
+            <div class="photo-card">
+                <div class="photo-header">
+                    <h3>📄 Документ об утилизации</h3>
+                </div>
+                <div class="photo-container">
+                    {% if report.disposal_document_path %}
+                    <img src="{{ url_for('static', filename='uploads/' + report.disposal_document_path) }}"
+                        alt="Документ об утилизации">
+                    {% else %}
+                    <p style="padding: 2rem; text-align: center; color: #999;">Документ не загружен</p>
+                    {% endif %}
+                </div>
+                <div class="photo-footer">
+                    Чек или справка с полигона
+                </div>
+            </div>
+        </div>
+
+        <div class="actions-card">
+            <h2>Решение по проверке</h2>
+
+            <div class="action-buttons">
+                <form method="POST" action="{{ url_for('admin.approve_cleanup', report_id=report.id) }}"
+                    style="display: inline;">
+                    <button type="submit" class="btn-approve">
+                        ✅ Подтвердить уборку
+                    </button>
+                </form>
+
+                <button type="button" class="btn-reject" onclick="toggleRejectForm()">
+                    ❌ Отклонить уборку
+                </button>
+
+                <a href="{{ url_for('admin.dashboard') }}" class="btn-back">
+                    ← Назад
+                </a>
+            </div>
+
+            <div class="reject-form" id="rejectForm">
+                <form method="POST" action="{{ url_for('admin.reject_cleanup', report_id=report.id) }}">
+                    <div class="form-group">
+                        <label for="comment">Причина отклонения:</label>
+                        <textarea name="comment" id="comment" rows="4"
+                            placeholder="Укажите причину отклонения уборки..." required></textarea>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="submit" class="btn-reject">
+                            Отклонить с комментарием
+                        </button>
+                        <button type="button" class="btn-back" onclick="toggleRejectForm()">
+                            Отмена
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleRejectForm() {
+        const form = document.getElementById('rejectForm');
+        form.classList.toggle('active');
+    }
+</script>
+{% endblock %}

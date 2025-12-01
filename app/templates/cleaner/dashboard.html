@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}Кабинет сотрудника - Чистый Алматы{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cleaner-page {
+        background: var(--bg-light);
+        min-height: 100vh;
+        padding-bottom: 2rem;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding: 2rem 0;
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--kz-blue) 0%, var(--kz-gold) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .stat-box {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        transition: transform 0.3s;
+    }
+
+    .stat-box:hover {
+        transform: translateY(-4px);
+    }
+
+    .stat-icon-large {
+        font-size: 3rem;
+    }
+
+    .stat-value-large {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--graphite);
+    }
+
+    .stat-label-large {
+        font-size: 1rem;
+        color: #666;
+    }
+
+    .stat-warning {
+        border-left: 4px solid #ff9800;
+    }
+
+    .stat-success {
+        border-left: 4px solid var(--green-lime);
+    }
+
+    .section-header {
+        margin: 3rem 0 1.5rem;
+    }
+
+    .section-header h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--graphite);
+    }
+
+    .reports-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .report-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s;
+    }
+
+    .report-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .report-image-container {
+        position: relative;
+        width: 100%;
+        height: 200px;
+        overflow: hidden;
+        background: #f5f5f5;
+    }
+
+    .report-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .report-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: white;
+    }
+
+    .badge-warning {
+        background: #ff9800;
+    }
+
+    .badge-success {
+        background: var(--green-lime);
+    }
+
+    .report-content {
+        padding: 1.5rem;
+    }
+
+    .report-meta {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .report-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--graphite);
+        margin-bottom: 0.5rem;
+    }
+
+    .report-description {
+        color: #666;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+
+    .report-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-success {
+        background: var(--green-lime);
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #5cb860;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        color: var(--graphite);
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: #666;
+    }
+
+    .table-responsive {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        overflow-x: auto;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table thead {
+        background: var(--bg-light);
+    }
+
+    .table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: var(--graphite);
+        border-bottom: 2px solid #e0e0e0;
+    }
+
+    .table td {
+        padding: 1rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .table tbody tr:hover {
+        background: var(--bg-light);
+    }
+
+    .mt-5 {
+        margin-top: 3rem;
+    }
+
+    .mb-4 {
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cleaner-page">
+    <div class="container">
+        <div class="page-header">
+            <h1>🧹 Кабинет сотрудника очистки</h1>
+            <p>Управление задачами по уборке города</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-box stat-warning">
+                <div class="stat-icon-large">⚠️</div>
+                <div class="stat-content">
+                    <div class="stat-value-large">{{ confirmed_reports|length }}</div>
+                    <div class="stat-label-large">Требуют уборки</div>
+                </div>
+            </div>
+
+            <div class="stat-box stat-success">
+                <div class="stat-icon-large">✅</div>
+                <div class="stat-content">
+                    <div class="stat-value-large">{{ my_cleaned_reports|length }}</div>
+                    <div class="stat-label-large">Вы убрали</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Tasks -->
+        <div class="section-header">
+            <h2>📍 Активные задачи</h2>
+        </div>
+
+        {% if confirmed_reports %}
+        <div class="reports-grid">
+            {% for report in confirmed_reports %}
+            <div class="report-card">
+                <div class="report-image-container">
+                    <img src="{{ url_for('static', filename=report.photo_path) }}" alt="Report" class="report-image">
+                    <span class="report-badge badge-warning">Требует уборки</span>
+                </div>
+                <div class="report-content">
+                    <div class="report-meta">
+                        <span>📍 {{ report.district.name if report.district else 'Алматы' }}</span>
+                        <span>📅 {{ report.created_at.strftime('%d.%m.%Y') }}</span>
+                    </div>
+
+                    <h3 class="report-title">
+                        {% if report.waste_type == 'plastic' %}Пластик
+                        {% elif report.waste_type == 'metal' %}Металл
+                        {% elif report.waste_type == 'organic' %}Органика
+                        {% elif report.waste_type == 'construction' %}Стройматериалы
+                        {% elif report.waste_type == 'mixed' %}Смешанные
+                        {% elif report.waste_type == 'vandalism' %}Вандализм
+                        {% elif report.waste_type == 'nature_damage' %}Вред природе
+                        {% else %}Мусор{% endif %}
+                    </h3>
+
+                    <p class="report-description">
+                        {{ report.description[:100] + '...' if report.description else 'Нет описания' }}
+                    </p>
+
+                    <div class="report-actions">
+                        <a href="{{ url_for('main.view_report', report_id=report.id) }}"
+                            class="btn btn-outline btn-sm">Подробнее</a>
+                        <a href="{{ url_for('cleaner.complete_cleanup', report_id=report.id) }}"
+                            class="btn btn-success btn-sm">Приступить к уборке</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🎉</div>
+            <h3>Все чисто!</h3>
+            <p>На данный момент нет активных задач по уборке.</p>
+        </div>
+        {% endif %}
+
+        <!-- History -->
+        {% if my_cleaned_reports %}
+        <div class="section-header mt-5">
+            <h2>📜 История уборок</h2>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Дата уборки</th>
+                        <th>Локация</th>
+                        <th>Тип</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in my_cleaned_reports %}
+                    <tr>
+                        <td>#{{ report.id }}</td>
+                        <td>{{ report.cleaned_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                        <td>{{ report.district.name if report.district else 'Алматы' }}</td>
+                        <td>{{ report.waste_type }}</td>
+                        <td><span class="badge badge-success">Убрано</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

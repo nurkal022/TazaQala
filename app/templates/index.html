@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Карта загрязнений{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero {
+        background: linear-gradient(135deg, var(--blue-ice) 0%, var(--green-lime) 100%);
+        color: white;
+        padding: 3rem 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.1)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,138.7C960,139,1056,117,1152,101.3C1248,85,1344,75,1392,69.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
+        background-size: cover;
+        opacity: 0.3;
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .hero h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .hero p {
+        font-size: 1.3rem;
+        margin-bottom: 2rem;
+        opacity: 0.95;
+    }
+    
+    .stats-bar {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+        max-width: 1400px;
+        margin: -50px auto 2rem;
+        padding: 0 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px var(--shadow);
+        text-align: center;
+        transform: translateY(0);
+        transition: transform 0.3s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.12);
+    }
+    
+    .stat-card .icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card .number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--graphite);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card .label {
+        color: #757575;
+        font-size: 0.95rem;
+    }
+    
+    .map-container {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px var(--shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .map-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .map-header h2 {
+        font-size: 1.8rem;
+        color: var(--graphite);
+        font-weight: 700;
+    }
+    
+    .map-filters {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid #e0e0e0;
+        background: white;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 600;
+    }
+    
+    .filter-btn:hover,
+    .filter-btn.active {
+        border-color: var(--green-lime);
+        background: var(--green-lime);
+        color: white;
+    }
+    
+    #map {
+        height: 600px;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .legend {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px var(--shadow);
+        position: absolute;
+        bottom: 30px;
+        right: 10px;
+        z-index: 1000;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+    }
+    
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2rem;
+        }
+        
+        .hero p {
+            font-size: 1.1rem;
+        }
+        
+        .stats-bar {
+            grid-template-columns: 1fr;
+            margin: 1rem auto;
+        }
+        
+        #map {
+            height: 400px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="hero-content">
+        <h1>🌿 ДЫШИ СВОБОДНО</h1>
+        <h2>ЧИСТЫЙ ГОРОД</h2>
+        <p>Отметь загрязнение на карте — внеси вклад в чистоту Алматы</p>
+        <a href="{{ url_for('reports.new_report') }}" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2rem;">
+            <i class="bi bi-camera-fill"></i> Сообщить о проблеме
+        </a>
+    </div>
+</section>
+
+<!-- Stats Bar -->
+<div class="stats-bar">
+    <div class="stat-card">
+        <div class="icon">📍</div>
+        <div class="number">{{ stats.total_reports }}</div>
+        <div class="label">Всего сообщений</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="icon">✅</div>
+        <div class="number">{{ stats.cleaned_reports }}</div>
+        <div class="label">Убрано точек</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="icon">👥</div>
+        <div class="number">{{ stats.active_users }}</div>
+        <div class="label">Активных граждан</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="icon">⏳</div>
+        <div class="number">{{ stats.pending_reports }}</div>
+        <div class="label">На проверке</div>
+    </div>
+</div>
+
+<!-- Map Section -->
+<div class="container">
+    <div class="map-container">
+        <div class="map-header">
+            <h2>📍 Карта загрязнений Алматы</h2>
+            <div class="map-filters">
+                <button class="filter-btn active" onclick="filterReports('all')">Все</button>
+                <button class="filter-btn" onclick="filterReports('confirmed')">Подтверждённые</button>
+                <button class="filter-btn" onclick="filterReports('cleaned')">Убранные</button>
+                <button class="filter-btn" onclick="filterReports('pending')">На проверке</button>
+            </div>
+        </div>
+        
+        <div id="map"></div>
+        
+        <div class="legend">
+            <h4 style="margin-bottom: 0.5rem;">Легенда:</h4>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #E53935;"></div>
+                <span>Подтверждено</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #66BB6A;"></div>
+                <span>Убрано</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FFB300;"></div>
+                <span>На проверке</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize map centered on Almaty
+    const map = L.map('map').setView([43.2220, 76.8512], 12);
+    
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19
+    }).addTo(map);
+    
+    let markers = [];
+    let allReports = [];
+    
+    // Load reports
+    async function loadReports(status = 'confirmed') {
+        try {
+            const response = await fetch(`/api/reports?status=${status}`);
+            const data = await response.json();
+            allReports = data.reports;
+            displayReports(allReports);
+        } catch (error) {
+            console.error('Error loading reports:', error);
+        }
+    }
+    
+    // Display reports on map
+    function displayReports(reports) {
+        // Clear existing markers
+        markers.forEach(marker => map.removeLayer(marker));
+        markers = [];
+        
+        reports.forEach(report => {
+            // Determine marker color based on status
+            let color = '#E53935'; // red for confirmed
+            if (report.status === 'cleaned') color = '#66BB6A'; // green
+            if (report.status === 'pending') color = '#FFB300'; // yellow
+            
+            const icon = L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>`,
+                iconSize: [30, 30]
+            });
+            
+            const marker = L.marker([report.latitude, report.longitude], { icon })
+                .addTo(map)
+                .bindPopup(`
+                    <div style="max-width: 300px;">
+                        <img src="${report.photo_url}" style="width: 100%; border-radius: 8px; margin-bottom: 10px;" onerror="this.style.display='none'">
+                        <h4 style="margin: 0 0 10px 0;">${report.district || 'Алматы'}</h4>
+                        <p style="margin: 0 0 10px 0;">${report.description || 'Нет описания'}</p>
+                        <p style="margin: 0; font-size: 0.9rem; color: #666;">
+                            <strong>Статус:</strong> ${getStatusText(report.status)}<br>
+                            <strong>AI достоверность:</strong> ${Math.round(report.ai_confidence * 100)}%<br>
+                            <strong>Автор:</strong> ${report.author}
+                        </p>
+                        <a href="/report/${report.id}" style="display: inline-block; margin-top: 10px; color: #42A5F5; text-decoration: none; font-weight: 600;">Подробнее →</a>
+                    </div>
+                `);
+            
+            markers.push(marker);
+        });
+    }
+    
+    function getStatusText(status) {
+        const statusMap = {
+            'confirmed': '✅ Подтверждено',
+            'cleaned': '🎉 Убрано',
+            'pending': '⏳ На проверке',
+            'rejected': '❌ Отклонено'
+        };
+        return statusMap[status] || status;
+    }
+    
+    // Filter reports
+    function filterReports(status) {
+        // Update active button
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        // Load reports with filter
+        if (status === 'all') {
+            loadReports('');
+        } else {
+            loadReports(status);
+        }
+    }
+    
+    // Initial load
+    loadReports('confirmed');
+</script>
+{% endblock %}
+

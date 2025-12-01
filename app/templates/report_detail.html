@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Репорт #{{ report.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-detail {
+        max-width: 1000px;
+        margin: 2rem auto;
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px var(--shadow);
+    }
+    
+    .report-header {
+        background: linear-gradient(135deg, var(--blue-ice), var(--green-lime));
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .report-status {
+        display: inline-block;
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .report-content {
+        padding: 2rem;
+    }
+    
+    .report-image-container {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .report-image {
+        max-width: 100%;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px var(--shadow);
+    }
+    
+    .report-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+    
+    .info-item {
+        padding: 1.5rem;
+        background: #f5f5f5;
+        border-radius: 12px;
+    }
+    
+    .info-label {
+        color: #757575;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--graphite);
+    }
+    
+    .report-map {
+        height: 300px;
+        border-radius: 12px;
+        margin: 2rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="report-detail">
+        <div class="report-header">
+            <div class="report-status" style="background: {{ 'rgba(255,255,255,0.3)' }};">
+                {{ '✅ Подтверждено' if report.status == 'confirmed' else '⏳ На проверке' if report.status == 'pending' else '🎉 Убрано' if report.status == 'cleaned' else '❌ Отклонено' }}
+            </div>
+            <h1>Репорт #{{ report.id }}</h1>
+            <p>{{ report.district or 'Алматы' }} • {{ report.created_at.strftime('%d %B %Y, %H:%M') }}</p>
+        </div>
+        
+        <div class="report-content">
+            <!-- Main Image -->
+            <div class="report-image-container">
+                <img src="{{ report.photo_path | report_photo_url }}" 
+                     class="report-image" 
+                     alt="Report photo">
+            </div>
+            
+            <!-- Info Grid -->
+            <div class="report-info-grid">
+                <div class="info-item">
+                    <div class="info-label">Автор</div>
+                    <div class="info-value">{{ report.author.username if report.author and not report.author.is_anonymous_display else 'Аноним' }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">AI достоверность</div>
+                    <div class="info-value" style="color: var(--green-lime);">{{ (report.ai_confidence * 100) | round }}%</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Тип нарушения</div>
+                    <div class="info-value">
+                        {% set category = report.report_category or report.trash_type or 'trash' %}
+                        {% if category == 'trash' %}🗑️ Мусор
+                        {% elif category == 'vandalism' %}🎨 Вандализм
+                        {% elif category == 'nature_damage' %}🌳 Повреждение природы
+                        {% elif category == 'illegal_dumping' %}🚛 Незаконный сброс
+                        {% elif category == 'construction_waste' %}🏗️ Строительный мусор
+                        {% elif category == 'hazardous_waste' %}⚠️ Опасные отходы
+                        {% else %}📋 Другое{% endif %}
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Просмотры</div>
+                    <div class="info-value">👁️ {{ report.views_count }}</div>
+                </div>
+            </div>
+            
+            <!-- Description -->
+            {% if report.description %}
+            <div style="background: #f5f5f5; padding: 1.5rem; border-radius: 12px; margin: 2rem 0;">
+                <h3 style="margin: 0 0 1rem 0;">📝 Описание</h3>
+                <p style="margin: 0;">{{ report.description }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- Address -->
+            <div style="background: #e3f2fd; padding: 1.5rem; border-radius: 12px; margin: 2rem 0;">
+                <h3 style="margin: 0 0 1rem 0;">📍 Местоположение</h3>
+                <p style="margin: 0;">
+                    <strong>Адрес:</strong> {{ report.address or 'Не указан' }}<br>
+                    <strong>Район:</strong> {{ report.district or 'Не указан' }}<br>
+                    <strong>Координаты:</strong> {{ report.latitude }}, {{ report.longitude }}
+                </p>
+            </div>
+            
+            <!-- Map -->
+            <div id="reportMap" class="report-map"></div>
+            
+            <!-- Cleaned Image -->
+            {% if report.cleaned_photo_path or report.status == 'cleaned' %}
+            <div style="margin-top: 2rem;">
+                <h3>✨ После уборки</h3>
+                <div class="report-image-container">
+                    <img src="{{ report.cleaned_photo_path | cleaned_photo_url }}" 
+                         class="report-image" 
+                         alt="Cleaned photo">
+                </div>
+                <p style="text-align: center; color: #757575;">
+                    Убрано {{ report.cleaned_at.strftime('%d %B %Y') if report.cleaned_at else 'Дата не указана' }}
+                </p>
+            </div>
+            {% endif %}
+            
+            <!-- Actions -->
+            <div style="margin-top: 2rem; text-align: center;">
+                <button class="btn btn-primary" onclick="upvoteReport()">
+                    👍 Поддержать ({{ report.upvotes }})
+                </button>
+                <a href="{{ url_for('main.index') }}" class="btn btn-outline">← Вернуться к карте</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize map
+    const map = L.map('reportMap').setView([{{ report.latitude }}, {{ report.longitude }}], 15);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+    
+    // Add marker
+    const icon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background-color: #E53935; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>',
+        iconSize: [30, 30]
+    });
+    
+    L.marker([{{ report.latitude }}, {{ report.longitude }}], { icon }).addTo(map);
+    
+    // Upvote function
+    async function upvoteReport() {
+        try {
+            const response = await fetch('/reports/{{ report.id }}/upvote', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                location.reload();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }
+</script>
+{% endblock %}
+

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование профиля{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="max-width: 600px; margin: 3rem auto; background: white; padding: 2.5rem; border-radius: 16px; box-shadow: 0 4px 20px var(--shadow);">
+        <h1 style="margin-bottom: 2rem;">✏️ Редактирование профиля</h1>
+        
+        <form method="POST">
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Полное имя</label>
+                <input type="text" name="full_name" value="{{ current_user.full_name or '' }}" 
+                       style="width: 100%; padding: 0.8rem; border: 2px solid #e0e0e0; border-radius: 8px;">
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Телефон</label>
+                <input type="tel" name="phone" value="{{ current_user.phone or '' }}" 
+                       style="width: 100%; padding: 0.8rem; border: 2px solid #e0e0e0; border-radius: 8px;">
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" name="is_anonymous_display" 
+                           {{ 'checked' if current_user.is_anonymous_display else '' }}>
+                    <span>Отображаться анонимно в лидерборде</span>
+                </label>
+            </div>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Сохранить</button>
+                <a href="{{ url_for('auth.profile') }}" class="btn btn-outline" style="flex: 1; text-align: center;">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

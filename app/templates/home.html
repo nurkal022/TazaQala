@@ -1,0 +1,564 @@
+{% extends "base.html" %}
+
+{% block title %}Чистый Алматы - Гражданская экоплатформа{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero Section - Modern Design */
+    .hero-section {
+        position: relative;
+        min-height: 95vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #5F5FFF 0%, #8B5CF6 25%, #EC4899 60%, #FF1B8D 100%);
+        overflow: hidden;
+        padding: 2rem 2rem 8rem;
+    }
+    
+    /* Animated Background Elements */
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 50%, rgba(102, 187, 106, 0.4) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(66, 165, 245, 0.4) 0%, transparent 50%),
+            radial-gradient(circle at 40% 20%, rgba(255, 107, 157, 0.35) 0%, transparent 50%);
+        animation: gradientShift 15s ease infinite;
+    }
+    
+    @keyframes gradientShift {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.1); }
+    }
+    
+    /* Floating Shapes */
+    .floating-shape {
+        position: absolute;
+        border-radius: 50%;
+        opacity: 0.1;
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    .shape-1 { width: 300px; height: 300px; background: #4CAF50; top: 10%; left: 10%; animation-delay: 0s; }
+    .shape-2 { width: 200px; height: 200px; background: #2196F3; bottom: 20%; right: 15%; animation-delay: 2s; }
+    .shape-3 { width: 150px; height: 150px; background: #FFC107; top: 60%; left: 70%; animation-delay: 4s; }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        33% { transform: translateY(-30px) rotate(10deg); }
+        66% { transform: translateY(20px) rotate(-10deg); }
+    }
+    
+    /* Hero Content */
+    .hero-content {
+        position: relative;
+        z-index: 10;
+        max-width: 1200px;
+        text-align: center;
+        animation: fadeInUp 1s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .hero-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        padding: 0.6rem 1.8rem;
+        border-radius: 50px;
+        color: white;
+        font-weight: 700;
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+        animation: fadeIn 1s ease-out 0.2s backwards;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .hero-title {
+        font-size: 4rem;
+        font-weight: 900;
+        color: white;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+        text-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        animation: fadeInUp 1s ease-out 0.3s backwards;
+    }
+    
+    .hero-title .highlight {
+        background: linear-gradient(45deg, #4CAF50, #2196F3, #FFC107);
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: inline-block;
+        animation: shimmer 3s ease-in-out infinite;
+        filter: brightness(1.2) contrast(1.1);
+    }
+    
+    @keyframes shimmer {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+    }
+    
+    .hero-subtitle {
+        font-size: 1.4rem;
+        color: rgba(255, 255, 255, 0.98);
+        margin-bottom: 3rem;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.7;
+        animation: fadeInUp 1s ease-out 0.5s backwards;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .hero-buttons {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        animation: fadeInUp 1s ease-out 0.7s backwards;
+        margin-bottom: 3rem;
+    }
+    
+    .hero-btn {
+        padding: 1.2rem 2.5rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        border-radius: 50px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.8rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .hero-btn-primary {
+        background: linear-gradient(135deg, #FFFFFF 0%, #F0F0F0 100%);
+        color: #5B6DEA;
+        font-weight: 800;
+    }
+    
+    .hero-btn-primary:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+        background: linear-gradient(135deg, #FFFFFF 0%, #FAFAFA 100%);
+    }
+    
+    .hero-btn-secondary {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(15px);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.6);
+        font-weight: 800;
+    }
+    
+    .hero-btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.35);
+        border-color: white;
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Stats Section */
+    .stats-section {
+        margin-top: 2rem;
+        position: relative;
+        z-index: 20;
+        padding: 0 2rem 4rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 2.5rem 2rem;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        transition: all 0.3s ease;
+        animation: fadeInUp 1s ease-out backwards;
+    }
+    
+    .stat-card:nth-child(1) { animation-delay: 0.8s; }
+    .stat-card:nth-child(2) { animation-delay: 1s; }
+    .stat-card:nth-child(3) { animation-delay: 1.2s; }
+    
+    .stat-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: linear-gradient(135deg, #5F5FFF 0%, #8B5CF6 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.2rem;
+        animation: bounce 2s ease-in-out infinite;
+        box-shadow: 0 8px 30px rgba(95, 95, 255, 0.4);
+    }
+    
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    .stat-card:nth-child(2) .stat-icon {
+        background: linear-gradient(135deg, #4CAF50 0%, #2196F3 100%);
+        animation-delay: 0.2s;
+        box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+    }
+    
+    .stat-card:nth-child(3) .stat-icon {
+        background: linear-gradient(135deg, #2196F3 0%, #4CAF50 100%);
+        animation-delay: 0.4s;
+        box-shadow: 0 8px 25px rgba(33, 150, 243, 0.3);
+    }
+    
+    .stat-number {
+        font-size: 3.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #5F5FFF 0%, #EC4899 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+        filter: brightness(1.15);
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    /* Features Section */
+    .features-section {
+        padding: 6rem 2rem;
+        background: linear-gradient(to bottom, #f8f9fa, white);
+    }
+    
+    .section-title {
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: #263238;
+        margin-bottom: 1rem;
+    }
+    
+    .section-subtitle {
+        text-align: center;
+        font-size: 1.2rem;
+        color: #666;
+        margin-bottom: 4rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2.5rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .feature-card {
+        text-align: center;
+        padding: 2rem;
+        transition: transform 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: linear-gradient(135deg, #e8f5e9, #e1f5fe);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+    }
+    
+    .feature-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #263238;
+        margin-bottom: 1rem;
+    }
+    
+    .feature-text {
+        color: #666;
+        line-height: 1.6;
+    }
+    
+    /* CTA Section */
+    .cta-section {
+        padding: 5rem 2rem;
+        background: linear-gradient(135deg, #5F5FFF 0%, #8B5CF6 50%, #EC4899 100%);
+        text-align: center;
+        color: white;
+    }
+    
+    .cta-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        margin-bottom: 1rem;
+    }
+    
+    .cta-text {
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+        opacity: 0.95;
+    }
+    
+    /* Mobile Optimization */
+    @media (max-width: 768px) {
+        .hero-section {
+            min-height: auto;
+            padding: 3rem 1.5rem 5rem;
+        }
+        
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .hero-buttons {
+            flex-direction: column;
+            margin-bottom: 2rem;
+        }
+        
+        .hero-btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .stats-section {
+            margin-top: 2rem;
+            padding: 0 1rem 3rem;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .floating-shape {
+            display: none;
+        }
+        
+        .section-title {
+            font-size: 2rem;
+        }
+        
+        .features-section {
+            padding: 3rem 1rem;
+        }
+        
+        .features-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1rem;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <!-- Floating Shapes -->
+    <div class="floating-shape shape-1"></div>
+    <div class="floating-shape shape-2"></div>
+    <div class="floating-shape shape-3"></div>
+    
+    <div class="hero-content">
+        <div class="hero-badge">
+            🌿 Гражданская экоплатформа
+        </div>
+        
+        <h1 class="hero-title">
+            <span class="highlight">Чистый Алматы</span><br>
+            начинается с тебя
+        </h1>
+        
+        <p class="hero-subtitle">
+            Отметь загрязнение на карте, получи баллы и стань частью движения за экологичный город. 
+            AI-модерация и прозрачная система вознаграждений.
+        </p>
+        
+        <div class="hero-buttons">
+            <a href="{{ url_for('reports.new_report') }}" class="hero-btn hero-btn-primary">
+                <i class="bi bi-camera-fill"></i>
+                Сообщить о проблеме
+            </a>
+            <a href="{{ url_for('main.map') }}" class="hero-btn hero-btn-secondary">
+                <i class="bi bi-map"></i>
+                Открыть карту
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📍</div>
+            <div class="stat-number">{{ stats.total_reports or 0 }}</div>
+            <div class="stat-label">Всего сообщений</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-number">{{ stats.cleaned_reports or 0 }}</div>
+            <div class="stat-label">Убранных точек</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-number">{{ stats.active_users or 0 }}</div>
+            <div class="stat-label">Активных граждан</div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <h2 class="section-title">Почему Taza Qala?</h2>
+    <p class="section-subtitle">
+        Современная платформа для вовлечения жителей в заботу о чистоте города
+    </p>
+    
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🤖</div>
+            <h3 class="feature-title">AI-модерация</h3>
+            <p class="feature-text">
+                Искусственный интеллект автоматически проверяет фотографии и определяет тип загрязнения
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <h3 class="feature-title">Система баллов</h3>
+            <p class="feature-text">
+                Получайте баллы за каждый подтверждённый репорт и участвуйте в лидерборде города
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">🏆</div>
+            <h3 class="feature-title">Награды и бейджи</h3>
+            <p class="feature-text">
+                Зарабатывайте достижения, получайте звания и становитесь героем своего района
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3 class="feature-title">Прозрачность</h3>
+            <p class="feature-text">
+                Вся статистика публична: следите за прогрессом своего района в реальном времени
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">🗺️</div>
+            <h3 class="feature-title">Интерактивная карта</h3>
+            <p class="feature-text">
+                Видьте все точки загрязнения на карте, фильтруйте по статусам и районам
+            </p>
+        </div>
+        
+        <div class="feature-card">
+            <div class="feature-icon">📱</div>
+            <h3 class="feature-title">Мобильная версия</h3>
+            <p class="feature-text">
+                Создавайте репорты прямо с телефона: сфотографировал — отправил — готово!
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <h2 class="cta-title">Присоединяйся к движению!</h2>
+    <p class="cta-text">
+        Вместе мы можем сделать Алматы чище и комфортнее для жизни
+    </p>
+    <div class="hero-buttons">
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('reports.new_report') }}" class="hero-btn hero-btn-primary">
+                <i class="bi bi-camera-fill"></i>
+                Создать репорт
+            </a>
+        {% else %}
+            <a href="{{ url_for('auth.register') }}" class="hero-btn hero-btn-primary">
+                <i class="bi bi-person-plus"></i>
+                Зарегистрироваться
+            </a>
+            <a href="{{ url_for('auth.login') }}" class="hero-btn hero-btn-secondary">
+                <i class="bi bi-box-arrow-in-right"></i>
+                Войти
+            </a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

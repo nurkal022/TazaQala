@@ -1,0 +1,51 @@
+# Пример systemd service файла для Taza Qala
+# Сохраните это как /etc/systemd/system/taza_qala.service
+# 
+# ВАЖНО: Замените 'ваш-секретный-ключ' на реальный секретный ключ!
+
+[Unit]
+Description=Taza Qala Flask Application
+After=network.target
+
+[Service]
+# Пользователь и группа (обычно www-data для веб-приложений)
+User=www-data
+Group=www-data
+
+# Рабочая директория
+WorkingDirectory=/var/www/taza_qala
+
+# Путь к виртуальному окружению
+Environment="PATH=/var/www/taza_qala/venv/bin"
+
+# Переменные окружения
+Environment="SECRET_KEY=ваш-секретный-ключ-измените-это"
+Environment="DATABASE_URL=sqlite:////var/www/taza_qala/taza_qala.db"
+Environment="FLASK_APP=app.py"
+Environment="SCRIPT_NAME=/taza_qala"
+
+# Команда запуска Gunicorn
+# --bind 127.0.0.1:5001 - слушаем только на localhost (nginx будет проксировать)
+# --workers 3 - количество воркеров (можно увеличить для большей нагрузки)
+# --timeout 120 - таймаут в секундах
+# --access-logfile - - логировать в stdout
+# --error-logfile - - ошибки в stderr
+ExecStart=/var/www/taza_qala/venv/bin/gunicorn \
+    --bind 127.0.0.1:5001 \
+    --workers 3 \
+    --timeout 120 \
+    --access-logfile - \
+    --error-logfile - \
+    --log-level info \
+    wsgi:app
+
+# Перезапуск при сбое
+Restart=always
+RestartSec=10
+
+# Ограничения ресурсов (опционально)
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+

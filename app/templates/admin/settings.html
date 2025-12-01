@@ -1,0 +1,165 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Настройки - Админ-панель{% endblock %}
+
+{% block header_title %}Настройки системы{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 2rem;
+    }
+    
+    .settings-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .settings-section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--admin-text);
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .setting-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .setting-item:last-child {
+        border-bottom: none;
+    }
+    
+    .setting-label {
+        font-weight: 600;
+        color: var(--admin-text);
+    }
+    
+    .setting-value {
+        color: var(--admin-text-light);
+        font-weight: 700;
+    }
+    
+    .info-box {
+        background: #f0f9ff;
+        border-left: 4px solid var(--admin-blue);
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    
+    .info-box-title {
+        font-weight: 700;
+        color: var(--admin-blue);
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-box-text {
+        color: var(--admin-text-light);
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="info-box">
+    <div class="info-box-title">ℹ️ Информация о настройках</div>
+    <div class="info-box-text">
+        Настройки системы управляются через конфигурационные файлы. Изменения вносятся администратором сервера.
+    </div>
+</div>
+
+<div class="settings-grid">
+    <div class="settings-card">
+        <h2 class="settings-section-title">📊 Балльная система</h2>
+        
+        <div class="setting-item">
+            <span class="setting-label">Баллы за подтвержденный репорт</span>
+            <span class="setting-value">{{ config.POINTS_CONFIRMED_REPORT }}</span>
+        </div>
+        
+        <div class="setting-item">
+            <span class="setting-label">Баллы за репорт с GPS</span>
+            <span class="setting-value">{{ config.POINTS_WITH_GPS }}</span>
+        </div>
+        
+        <div class="setting-item">
+            <span class="setting-label">Баллы за репорт с комментарием</span>
+            <span class="setting-value">{{ config.POINTS_WITH_GPS_COMMENT }}</span>
+        </div>
+        
+        <div class="setting-item">
+            <span class="setting-label">Штраф за фейк</span>
+            <span class="setting-value" style="color: var(--admin-red);">-{{ config.POINTS_FAKE_PENALTY }}</span>
+        </div>
+    </div>
+    
+    <div class="settings-card">
+        <h2 class="settings-section-title">🤖 AI Модерация</h2>
+        
+        <div class="setting-item">
+            <span class="setting-label">Порог автоподтверждения</span>
+            <span class="setting-value">{{ (config.AI_AUTO_CONFIRM_THRESHOLD * 100) | round }}%</span>
+        </div>
+        
+        <div class="setting-item">
+            <span class="setting-label">Порог отклонения</span>
+            <span class="setting-value">{{ (config.AI_REJECT_THRESHOLD * 100) | round }}%</span>
+        </div>
+        
+        <div class="setting-item">
+            <span class="setting-label">Максимальный размер файла</span>
+            <span class="setting-value">{{ (config.MAX_CONTENT_LENGTH / 1024 / 1024) | round }} МБ</span>
+        </div>
+    </div>
+    
+    <div class="settings-card">
+        <h2 class="settings-section-title">⚙️ Система</h2>
+        
+        <div class="setting-item">
+            <span class="setting-label">Репортов на странице</span>
+            <span class="setting-value">{{ config.REPORTS_PER_PAGE }}</span>
+        </div>
+        
+        <div class="setting-item">
+            <span class="setting-label">Время жизни сессии</span>
+            <span class="setting-value">{{ config.PERMANENT_SESSION_LIFETIME // 3600 }} часов</span>
+        </div>
+        
+        <div class="setting-item">
+            <span class="setting-label">Папка загрузок</span>
+            <span class="setting-value" style="font-size: 0.85rem;">{{ config.UPLOAD_FOLDER }}</span>
+        </div>
+    </div>
+    
+    <div class="settings-card">
+        <h2 class="settings-section-title">📈 Статистика</h2>
+        
+        <div class="setting-item">
+            <span class="setting-label">Всего репортов</span>
+            <span class="setting-value">{{ stats.total_reports if stats else 0 }}</span>
+        </div>
+        
+        <div class="setting-item">
+            <span class="setting-label">Всего пользователей</span>
+            <span class="setting-value">{{ stats.total_users if stats else 0 }}</span>
+        </div>
+        
+        <div class="setting-item">
+            <span class="setting-label">На модерации</span>
+            <span class="setting-value" style="color: var(--admin-yellow);">{{ stats.pending_moderation if stats else 0 }}</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

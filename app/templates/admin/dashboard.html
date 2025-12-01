@@ -1,0 +1,503 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Дашборд - Админ-панель{% endblock %}
+
+{% block header_title %}Дашборд{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card-large {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-left: 4px solid;
+        transition: transform 0.2s;
+    }
+
+    .stat-card-large:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-card-large.blue {
+        border-left-color: var(--admin-blue);
+    }
+
+    .stat-card-large.green {
+        border-left-color: var(--admin-green);
+    }
+
+    .stat-card-large.yellow {
+        border-left-color: var(--admin-yellow);
+    }
+
+    .stat-card-large.red {
+        border-left-color: var(--admin-red);
+    }
+
+    .stat-value-large {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--admin-text);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label-large {
+        font-size: 0.95rem;
+        color: var(--admin-text-light);
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+
+    .stat-change-large {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .stat-change-large.up {
+        color: var(--admin-green);
+    }
+
+    .stat-change-large.down {
+        color: var(--admin-red);
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .pending-reports-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .report-item-modern {
+        display: flex;
+        gap: 1rem;
+        padding: 1.25rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s;
+    }
+
+    .report-item-modern:hover {
+        background: #f1f5f9;
+        border-color: var(--admin-green-light);
+        transform: translateX(4px);
+    }
+
+    .report-image-modern {
+        width: 120px;
+        height: 120px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 2px solid #e2e8f0;
+    }
+
+    .report-details-modern {
+        flex: 1;
+    }
+
+    .report-header-modern {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+
+    .report-title-modern {
+        font-weight: 700;
+        color: var(--admin-text);
+        font-size: 1.05rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .report-meta-modern {
+        font-size: 0.85rem;
+        color: var(--admin-text-light);
+        margin-bottom: 0.5rem;
+    }
+
+    .ai-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .ai-badge.high {
+        background: #dcfce7;
+        color: #16a34a;
+    }
+
+    .ai-badge.medium {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .ai-badge.low {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+    .report-actions-modern {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    .btn-modern {
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-modern.success {
+        background: var(--admin-green);
+        color: white;
+    }
+
+    .btn-modern.success:hover {
+        background: var(--admin-green-light);
+    }
+
+    .btn-modern.danger {
+        background: var(--admin-red);
+        color: white;
+    }
+
+    .btn-modern.danger:hover {
+        background: #b91c1c;
+    }
+
+    .btn-modern.outline {
+        background: white;
+        color: var(--admin-text);
+        border: 2px solid #e2e8f0;
+    }
+
+    .btn-modern.outline:hover {
+        border-color: var(--admin-green);
+        color: var(--admin-green);
+    }
+
+    .quick-stats-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .quick-stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .quick-stat-item:last-child {
+        border-bottom: none;
+    }
+
+    .quick-stat-label {
+        color: var(--admin-text-light);
+        font-size: 0.9rem;
+    }
+
+    .quick-stat-value {
+        font-weight: 700;
+        color: var(--admin-text);
+        font-size: 1.1rem;
+    }
+
+    .empty-state-modern {
+        text-align: center;
+        padding: 3rem;
+        color: var(--admin-text-light);
+    }
+
+    .empty-state-modern i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    @media (max-width: 1024px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Статистика -->
+<div class="dashboard-stats">
+    <div class="stat-card-large blue">
+        <div class="stat-value-large">{{ stats.total_reports }}</div>
+        <div class="stat-label-large">Всего репортов</div>
+        <div class="stat-change-large up">
+            <i class="bi bi-arrow-up"></i>
+            <span>Всего в системе</span>
+        </div>
+    </div>
+
+    <div class="stat-card-large red">
+        <div class="stat-value-large">{{ stats.pending_moderation }}</div>
+        <div class="stat-label-large">На модерации</div>
+        <div class="stat-change-large {% if stats.pending_moderation > 0 %}down{% else %}up{% endif %}">
+            <i class="bi bi-{% if stats.pending_moderation > 0 %}arrow-down{% else %}check-circle{% endif %}"></i>
+            <span>{% if stats.pending_moderation > 0 %}Требуют внимания{% else %}Все проверено{% endif %}</span>
+        </div>
+    </div>
+
+    <div class="stat-card-large green">
+        <div class="stat-value-large">{{ stats.total_users }}</div>
+        <div class="stat-label-large">Пользователей</div>
+        <div class="stat-change-large up">
+            <i class="bi bi-arrow-up"></i>
+            <span>Активных пользователей</span>
+        </div>
+    </div>
+
+    <div class="stat-card-large yellow">
+        <div class="stat-value-large">{{ stats.ai_auto_confirmed }}</div>
+        <div class="stat-label-large">AI автоподтверждено</div>
+        <div class="stat-change-large up">
+            <i class="bi bi-arrow-up"></i>
+            <span>Автоматически обработано</span>
+        </div>
+    </div>
+
+    <div class="stat-card-large" style="border-left-color: #ff9800;">
+        <div class="stat-value-large">{{ stats.pending_verification or 0 }}</div>
+        <div class="stat-label-large">Проверка уборки</div>
+        <div class="stat-change-large {% if stats.pending_verification > 0 %}down{% else %}up{% endif %}">
+            <i
+                class="bi bi-{% if stats.pending_verification > 0 %}exclamation-circle{% else %}check-circle{% endif %}"></i>
+            <span>{% if stats.pending_verification > 0 %}Требуют проверки{% else %}Все проверено{% endif %}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Verification Section -->
+{% if pending_verification_reports %}
+<div style="margin-bottom: 2rem;">
+    <div class="pending-reports-card">
+        <div class="card-header">
+            <h2 class="card-title">🧹 Уборки на проверке</h2>
+            <span
+                style="background: #ff9800; color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">{{
+                pending_verification_reports|length }}</span>
+        </div>
+
+        {% for report in pending_verification_reports %}
+        <div class="report-item-modern">
+            <img src="{{ report.photo_path | report_photo_url }}"
+                class="report-image-modern" alt="Report"
+                onerror="this.src='{{ url_for('static', filename='image.png') }}'">
+
+            <div class="report-details-modern">
+                <div class="report-header-modern">
+                    <div>
+                        <div class="report-title-modern">
+                            {{ report.district or 'Алматы' }} • {{ report.address or 'Местоположение указано' }}
+                        </div>
+                        <div class="report-meta-modern">
+                            <i class="bi bi-calendar"></i> Убрано: {{ report.cleaned_at.strftime('%d.%m.%Y %H:%M') if
+                            report.cleaned_at else 'Не указано' }}
+                            {% if report.cleaned_by %}
+                            • <i class="bi bi-person-badge"></i> {{ report.cleaned_by.full_name or
+                            report.cleaned_by.username }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <span class="ai-badge" style="background: #fff3cd; color: #856404;">
+                        <i class="bi bi-hourglass-split"></i> На проверке
+                    </span>
+                </div>
+
+                <div class="report-actions-modern">
+                    <a href="{{ url_for('admin.verify_cleanup', report_id=report.id) }}" class="btn-modern success">
+                        <i class="bi bi-eye-fill"></i> Проверить уборку
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Основной контент -->
+<div class="dashboard-grid">
+    <!-- Репорты на проверке -->
+    <div class="pending-reports-card">
+        <div class="card-header">
+            <h2 class="card-title">⏳ Репорты на проверке</h2>
+            {% if reports|length > 0 %}
+            <span
+                style="background: var(--admin-red); color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 700;">{{
+                reports|length }}</span>
+            {% endif %}
+        </div>
+
+        {% if reports %}
+        {% for report in reports[:10] %}
+        <div class="report-item-modern">
+            <img src="{{ report.photo_path | report_photo_url }}"
+                class="report-image-modern" alt="Report"
+                onerror="this.src='{{ url_for('static', filename='image.png') }}'">
+
+            <div class="report-details-modern">
+                <div class="report-header-modern">
+                    <div>
+                        <div class="report-title-modern">
+                            {{ report.district or 'Алматы' }} • {{ report.address or 'Местоположение указано' }}
+                        </div>
+                        <div class="report-meta-modern">
+                            <i class="bi bi-calendar"></i> {{ report.created_at.strftime('%d.%m.%Y %H:%M') }}
+                            {% if report.author %}
+                            • <i class="bi bi-person"></i> {{ report.author.username }}
+                            {% else %}
+                            • <i class="bi bi-person"></i> Аноним
+                            {% endif %}
+                        </div>
+                    </div>
+                    <span
+                        class="ai-badge {{ 'high' if report.ai_confidence >= 0.7 else 'medium' if report.ai_confidence >= 0.5 else 'low' }}">
+                        <i class="bi bi-robot"></i> AI: {{ (report.ai_confidence * 100) | round if report.ai_confidence
+                        else 0 }}%
+                    </span>
+                </div>
+
+                {% if report.description %}
+                <p style="color: var(--admin-text-light); font-size: 0.9rem; margin-bottom: 0.5rem;">{{
+                    report.description[:100] }}{% if report.description|length > 100 %}...{% endif %}</p>
+                {% endif %}
+
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                    <span
+                        style="background: #e0f2fe; color: #0369a1; padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
+                        {% set category = report.report_category or report.trash_type or 'Не определен' %}
+                        {% if category == 'trash' %}🗑️ Мусор
+                        {% elif category == 'vandalism' %}🎨 Вандализм
+                        {% elif category == 'nature_damage' %}🌳 Природа
+                        {% elif category == 'illegal_dumping' %}🚛 Сброс
+                        {% elif category == 'construction_waste' %}🏗️ Стройка
+                        {% elif category == 'hazardous_waste' %}⚠️ Опасное
+                        {% else %}{{ category }}{% endif %}
+                    </span>
+                    <span
+                        style="background: #f3f4f6; color: #4b5563; padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.8rem;">
+                        {{ report.latitude|round(4) }}, {{ report.longitude|round(4) }}
+                    </span>
+                </div>
+
+                <div class="report-actions-modern">
+                    <form method="POST" action="{{ url_for('admin.moderate_report', report_id=report.id) }}" style="display: inline;">
+                        <input type="hidden" name="action" value="approve">
+                        <input type="hidden" name="comment" value="">
+                        <button type="submit" class="btn-modern success">
+                            <i class="bi bi-check-circle"></i> Подтвердить
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.moderate_report', report_id=report.id) }}" style="display: inline;">
+                        <input type="hidden" name="action" value="reject">
+                        <input type="hidden" name="comment" value="">
+                        <button type="submit" class="btn-modern danger">
+                            <i class="bi bi-x-circle"></i> Отклонить
+                        </button>
+                    </form>
+                    <a href="{{ url_for('main.view_report', report_id=report.id) }}" target="_blank" class="btn-modern outline">
+                        <i class="bi bi-eye"></i> Просмотр
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if reports|length > 10 %}
+        <div style="text-align: center; margin-top: 1rem;">
+            <a href="{{ url_for('admin.reports') }}" class="btn-modern outline">
+                <i class="bi bi-arrow-right"></i> Показать все ({{ reports|length }})
+            </a>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state-modern">
+            <i class="bi bi-check-circle-fill"></i>
+            <h3>Все репорты проверены!</h3>
+            <p>Новых репортов на модерации нет</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Быстрая статистика -->
+    <div class="quick-stats-card">
+        <div class="card-header">
+            <h2 class="card-title">📊 Быстрая статистика</h2>
+        </div>
+
+        <div class="quick-stat-item">
+            <span class="quick-stat-label">Подтверждено</span>
+            <span class="quick-stat-value" style="color: var(--admin-green);">{{ stats.confirmed or 0 }}</span>
+        </div>
+        <div class="quick-stat-item">
+            <span class="quick-stat-label">Убрано</span>
+            <span class="quick-stat-value" style="color: var(--admin-green);">{{ stats.cleaned or 0 }}</span>
+        </div>
+        <div class="quick-stat-item">
+            <span class="quick-stat-label">Отклонено</span>
+            <span class="quick-stat-value" style="color: var(--admin-red);">{{ stats.rejected or 0 }}</span>
+        </div>
+        <div class="quick-stat-item">
+            <span class="quick-stat-label">На проверке</span>
+            <span class="quick-stat-value" style="color: var(--admin-yellow);">{{ stats.pending_moderation }}</span>
+        </div>
+        <div class="quick-stat-item">
+            <span class="quick-stat-label">AI точность</span>
+            <span class="quick-stat-value" style="color: var(--admin-blue);">
+                {{ ((stats.ai_auto_confirmed / stats.total_reports * 100) | round(1)) if stats.total_reports > 0 else 0
+                }}%
+            </span>
+        </div>
+
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid #e2e8f0;">
+            <a href="{{ url_for('admin.statistics') }}" class="btn-modern outline"
+                style="width: 100%; justify-content: center;">
+                <i class="bi bi-graph-up"></i> Полная статистика с графиками
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

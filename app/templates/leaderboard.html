@@ -1,0 +1,558 @@
+{% extends "base.html" %}
+
+{% block title %}Лидерборд - Лучшие эко-патриоты{% endblock %}
+
+{% block extra_css %}
+<style>
+    .leaderboard-page {
+        background: linear-gradient(135deg, #f7faff 0%, #f2fff4 100%);
+        min-height: calc(100vh - 80px);
+        padding-bottom: 4rem;
+    }
+
+    .leaderboard-hero {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 3rem 2rem 2rem;
+        text-align: center;
+    }
+
+    .hero-card {
+        background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #66BB6A 100%);
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 32px;
+        box-shadow: 0 25px 60px rgba(255, 215, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+        animation: rotate 20s linear infinite;
+    }
+
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    .hero-card > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero-card h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .hero-card p {
+        font-size: 1.2rem;
+        opacity: 0.95;
+    }
+
+    .podium-section {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .podium {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+        padding: 2rem 0;
+    }
+
+    .podium-place {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        max-width: 280px;
+    }
+
+    .podium-place.rank-2 {
+        order: 1;
+    }
+
+    .podium-place.rank-1 {
+        order: 2;
+    }
+
+    .podium-place.rank-3 {
+        order: 3;
+    }
+
+    .podium-card {
+        background: white;
+        border-radius: 24px;
+        padding: 2rem;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        width: 100%;
+        text-align: center;
+        position: relative;
+        transition: transform 0.3s;
+    }
+
+    .podium-card:hover {
+        transform: translateY(-10px);
+    }
+
+    .podium-card.rank-1 {
+        border: 4px solid #FFD700;
+        box-shadow: 0 30px 60px rgba(255, 215, 0, 0.4);
+        transform: scale(1.1);
+    }
+
+    .podium-card.rank-2 {
+        border: 3px solid #C0C0C0;
+        box-shadow: 0 20px 40px rgba(192, 192, 192, 0.3);
+    }
+
+    .podium-card.rank-3 {
+        border: 3px solid #CD7F32;
+        box-shadow: 0 20px 40px rgba(205, 127, 50, 0.3);
+    }
+
+    .rank-crown {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+        animation: bounce 2s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .rank-badge-large {
+        position: absolute;
+        top: -25px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.8rem;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        color: white;
+    }
+
+    .rank-badge-large.gold {
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+    }
+
+    .rank-badge-large.silver {
+        background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
+    }
+
+    .rank-badge-large.bronze {
+        background: linear-gradient(135deg, #CD7F32, #8B4513);
+    }
+
+    .user-avatar-large {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #42A5F5, #66BB6A);
+        border-radius: 50%;
+        margin: 0 auto 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3.5rem;
+        color: white;
+        font-weight: 800;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .user-name-large {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        color: var(--graphite);
+    }
+
+    .user-level-large {
+        color: #66BB6A;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .points-display {
+        font-size: 3rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #66BB6A, #42A5F5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 1rem 0;
+    }
+
+    .user-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid #f0f0f0;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value-large {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--graphite);
+    }
+
+    .stat-label-large {
+        font-size: 0.9rem;
+        color: #757575;
+        margin-top: 0.3rem;
+    }
+
+    .top-list-section {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem 2rem;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .section-header h2 {
+        font-size: 2rem;
+        color: var(--graphite);
+        margin: 0;
+    }
+
+    .top-list-card {
+        background: white;
+        border-radius: 24px;
+        padding: 2rem;
+        box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+
+    .user-row-modern {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1.2rem;
+        background: linear-gradient(90deg, #f8f9fa 0%, white 100%);
+        border-radius: 16px;
+        margin-bottom: 0.8rem;
+        transition: all 0.3s;
+        border: 2px solid transparent;
+    }
+
+    .user-row-modern:hover {
+        transform: translateX(8px);
+        border-color: #66BB6A;
+        box-shadow: 0 8px 20px rgba(102, 187, 106, 0.2);
+    }
+
+    .user-row-rank {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #64748b;
+        min-width: 50px;
+        text-align: center;
+    }
+
+    .user-row-avatar-modern {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #42A5F5, #66BB6A);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.8rem;
+        font-weight: 800;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .user-row-info-modern {
+        flex: 1;
+    }
+
+    .user-row-name-modern {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--graphite);
+        margin-bottom: 0.3rem;
+    }
+
+    .user-row-level-modern {
+        font-size: 0.9rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .user-row-points-modern {
+        font-size: 1.8rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #66BB6A, #42A5F5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .district-section {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem 2rem;
+    }
+
+    .district-tabs-modern {
+        display: flex;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+        margin-bottom: 2rem;
+        background: white;
+        padding: 1rem;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .district-tab-modern {
+        padding: 0.7rem 1.5rem;
+        border: 2px solid #e2e8f0;
+        background: white;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    .district-tab-modern:hover {
+        border-color: #66BB6A;
+        color: #66BB6A;
+        transform: translateY(-2px);
+    }
+
+    .district-tab-modern.active {
+        background: linear-gradient(135deg, #66BB6A, #42A5F5);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 8px 20px rgba(102, 187, 106, 0.3);
+    }
+
+    .district-content {
+        display: none;
+    }
+
+    .district-content.active {
+        display: block;
+    }
+
+    @media (max-width: 968px) {
+        .podium {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .podium-place {
+            order: unset !important;
+            max-width: 100%;
+        }
+
+        .podium-card.rank-1 {
+            transform: scale(1);
+        }
+
+        .hero-card h1 {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="leaderboard-page">
+    <div class="leaderboard-hero">
+        <div class="hero-card">
+            <h1>🏆 Лидерборд</h1>
+            <p>Лучшие эко-патриоты Алматы</p>
+        </div>
+    </div>
+
+    <!-- Пьедестал ТОП-3 -->
+    <div class="podium-section">
+        <div class="podium">
+            {% for user in top_users[:3] %}
+            <div class="podium-place rank-{{ loop.index }}">
+                <div class="podium-card rank-{{ loop.index }}">
+                    {% if loop.index == 1 %}
+                    <div class="rank-crown">👑</div>
+                    {% endif %}
+                    <div class="rank-badge-large {{ 'gold' if loop.index == 1 else 'silver' if loop.index == 2 else 'bronze' }}">
+                        {{ loop.index }}
+                    </div>
+                    
+                    <div class="user-avatar-large">
+                        {{ (user.full_name or user.username)[0].upper() }}
+                    </div>
+                    
+                    <div class="user-name-large">
+                        {% if user.is_anonymous_display %}
+                            Пользователь #{{ user.id }}
+                        {% else %}
+                            {{ user.full_name or user.username }}
+                        {% endif %}
+                    </div>
+                    
+                    <div class="user-level-large">{{ user.level }}</div>
+                    
+                    <div class="points-display">{{ user.total_points }}</div>
+                    <div style="color: #64748b; font-weight: 600;">баллов</div>
+                    
+                    <div class="user-stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value-large">{{ user.reports_count }}</div>
+                            <div class="stat-label-large">Репортов</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value-large">{{ user.confirmed_reports }}</div>
+                            <div class="stat-label-large">Подтверждено</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Остальные ТОП-10 -->
+    {% if top_users|length > 3 %}
+    <div class="top-list-section">
+        <div class="section-header">
+            <h2>📊 ТОП-10 по городу</h2>
+        </div>
+        <div class="top-list-card">
+            {% for user in top_users[3:] %}
+            <div class="user-row-modern">
+                <div class="user-row-rank">{{ loop.index + 3 }}</div>
+                <div class="user-row-avatar-modern">{{ (user.full_name or user.username)[0].upper() }}</div>
+                <div class="user-row-info-modern">
+                    <div class="user-row-name-modern">
+                        {% if user.is_anonymous_display %}
+                            Пользователь #{{ user.id }}
+                        {% else %}
+                            {{ user.full_name or user.username }}
+                        {% endif %}
+                    </div>
+                    <div class="user-row-level-modern">
+                        <span>{{ user.level }}</span>
+                        <span>•</span>
+                        <span>{{ user.reports_count }} репортов</span>
+                    </div>
+                </div>
+                <div class="user-row-points-modern">{{ user.total_points }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Лидеры по районам -->
+    <div class="district-section">
+        <div class="section-header">
+            <h2>🏙️ Лидеры по районам</h2>
+        </div>
+        
+        <div class="district-tabs-modern">
+            {% for district in ['Алмалинский', 'Ауэзовский', 'Бостандыкский', 'Жетысуский', 
+                               'Медеуский', 'Наурызбайский', 'Турксибский', 'Алатауский'] %}
+                <button class="district-tab-modern {% if loop.first %}active{% endif %}" 
+                        onclick="showDistrict('{{ district }}')">
+                    {{ district }}
+                </button>
+            {% endfor %}
+        </div>
+        
+        <div class="top-list-card">
+            {% for district, users in district_leaders.items() %}
+            <div class="district-content {% if loop.first %}active{% endif %}" id="district-{{ district }}">
+                {% if users %}
+                    {% for user in users %}
+                    <div class="user-row-modern">
+                        <div class="user-row-rank">{{ loop.index }}</div>
+                        <div class="user-row-avatar-modern">{{ (user.full_name or user.username)[0].upper() }}</div>
+                        <div class="user-row-info-modern">
+                            <div class="user-row-name-modern">
+                                {% if user.is_anonymous_display %}
+                                    Пользователь #{{ user.id }}
+                                {% else %}
+                                    {{ user.full_name or user.username }}
+                                {% endif %}
+                            </div>
+                            <div class="user-row-level-modern">
+                                <span>{{ user.level }}</span>
+                            </div>
+                        </div>
+                        <div class="user-row-points-modern">{{ user.total_points }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; padding: 3rem; color: #64748b;">
+                        <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">😔</p>
+                        <p>Пока нет активных участников в этом районе</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Станьте первым!</p>
+                    </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showDistrict(district) {
+        // Hide all district content
+        document.querySelectorAll('.district-content').forEach(el => {
+            el.classList.remove('active');
+        });
+        
+        // Show selected district
+        document.getElementById('district-' + district).classList.add('active');
+        
+        // Update active tab
+        document.querySelectorAll('.district-tab-modern').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.textContent.trim() === district) {
+                btn.classList.add('active');
+            }
+        });
+    }
+</script>
+{% endblock %}

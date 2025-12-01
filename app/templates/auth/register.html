@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #e8f5e9 0%, #e1f5fe 100%);
+        min-height: 100vh;
+    }
+    
+    .auth-container {
+        max-width: 560px;
+        margin: 2rem auto;
+        background: white;
+        border-radius: 20px;
+        padding: 3rem 2.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .auth-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, var(--green-lime), var(--blue-ice));
+    }
+    
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .auth-header h1 {
+        font-size: 2.2rem;
+        color: var(--graphite);
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+    
+    .auth-header p {
+        color: #757575;
+        font-size: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.3rem;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--graphite);
+        font-size: 0.95rem;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: 0.9rem 1.2rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-family: 'Nunito Sans', sans-serif;
+        transition: all 0.3s ease;
+        background: #fafafa;
+    }
+    
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--green-lime);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 187, 106, 0.1);
+    }
+    
+    .submit-btn {
+        width: 100%;
+        padding: 1.1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(102, 187, 106, 0.3);
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+    
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 187, 106, 0.4);
+    }
+    
+    .auth-footer {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid #e0e0e0;
+        color: #757575;
+    }
+    
+    .auth-footer a {
+        color: var(--blue-ice);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.3s;
+    }
+    
+    .auth-footer a:hover {
+        color: var(--green-lime);
+        text-decoration: underline;
+    }
+    
+    .info-box {
+        background: linear-gradient(135deg, #e8f5e9 0%, #e1f5fe 100%);
+        border-left: 4px solid var(--green-lime);
+        padding: 1.2rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .info-box strong {
+        color: var(--graphite);
+        font-size: 1rem;
+    }
+    
+    .info-box ul {
+        margin: 0.8rem 0 0 1.5rem;
+        padding: 0;
+        color: #555;
+    }
+    
+    .info-box li {
+        margin-bottom: 0.3rem;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .icon-input-group {
+        position: relative;
+    }
+    
+    .icon-input-group i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        font-size: 1.1rem;
+    }
+    
+    .icon-input-group input {
+        padding-left: 3rem;
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1>✨ Регистрация</h1>
+            <p>Присоединяйтесь к сообществу Чистого Алматы</p>
+        </div>
+        
+        <div class="info-box">
+            <strong>🌟 Преимущества регистрации:</strong>
+            <ul>
+                <li>🎯 Получайте баллы за каждый репорт</li>
+                <li>🏆 Участвуйте в лидерборде города</li>
+                <li>🎖️ Зарабатывайте бейджи и награды</li>
+                <li>📊 Отслеживайте свою статистику</li>
+            </ul>
+        </div>
+        
+        <form method="POST">
+            <div class="form-group">
+                <label>👤 Имя пользователя *</label>
+                <div class="icon-input-group">
+                    <i class="bi bi-person"></i>
+                    <input type="text" name="username" required autofocus minlength="3" placeholder="username">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>📧 Email *</label>
+                <div class="icon-input-group">
+                    <i class="bi bi-envelope"></i>
+                    <input type="email" name="email" required placeholder="example@mail.com">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>📱 Телефон</label>
+                    <div class="icon-input-group">
+                        <i class="bi bi-phone"></i>
+                        <input type="tel" name="phone" placeholder="+7 (___) ___-__-__">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>✏️ Полное имя</label>
+                    <div class="icon-input-group">
+                        <i class="bi bi-person-badge"></i>
+                        <input type="text" name="full_name" placeholder="Иван Иванов">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>🔒 Пароль *</label>
+                    <div class="icon-input-group">
+                        <i class="bi bi-lock"></i>
+                        <input type="password" name="password" required minlength="6" placeholder="Минимум 6 символов">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>🔑 Повторите пароль *</label>
+                    <div class="icon-input-group">
+                        <i class="bi bi-lock-fill"></i>
+                        <input type="password" name="password2" required minlength="6" placeholder="Повторите пароль">
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary submit-btn">
+                Зарегистрироваться
+            </button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Уже есть аккаунт? <a href="{{ url_for('auth.login') }}">Войти</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Админ-панель{% endblock %} - Taza Qala</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --admin-sidebar: #1e3a8a;
+            --admin-sidebar-hover: #2563eb;
+            --admin-bg: #f5f7fa;
+            --admin-card: #ffffff;
+            --admin-text: #263238;
+            --admin-text-light: #64748b;
+            --admin-green: #059669;
+            --admin-green-light: #10b981;
+            --admin-red: #dc2626;
+            --admin-yellow: #f59e0b;
+            --admin-blue: #3b82f6;
+        }
+        
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            background: var(--admin-bg);
+            color: var(--admin-text);
+            overflow-x: hidden;
+        }
+        
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .admin-sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, var(--admin-sidebar) 0%, #1e40af 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar-header {
+            padding: 1.5rem 1.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .sidebar-logo {
+            width: 40px;
+            height: 40px;
+            background: var(--admin-green);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+        
+        .sidebar-user {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--admin-green-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .user-info {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        .user-role {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .sidebar-menu {
+            padding: 1rem 0;
+        }
+        
+        .menu-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .menu-section-title {
+            padding: 0.5rem 1.25rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.6;
+            margin-bottom: 0.5rem;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .menu-item:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .menu-item.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border-left: 3px solid var(--admin-green-light);
+        }
+        
+        .menu-item i {
+            width: 20px;
+            font-size: 1.1rem;
+        }
+        
+        .menu-item span {
+            flex: 1;
+        }
+        
+        .menu-badge {
+            background: var(--admin-green);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        
+        /* Main Content */
+        .admin-main {
+            flex: 1;
+            margin-left: 260px;
+            min-height: 100vh;
+        }
+        
+        .admin-header {
+            background: white;
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--admin-text);
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--admin-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--admin-text);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .header-icon:hover {
+            background: #e2e8f0;
+        }
+        
+        .icon-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: var(--admin-red);
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        
+        .admin-content {
+            padding: 2rem;
+        }
+        
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        
+        .stat-card.blue { border-left-color: var(--admin-blue); }
+        .stat-card.green { border-left-color: var(--admin-green); }
+        .stat-card.yellow { border-left-color: var(--admin-yellow); }
+        .stat-card.red { border-left-color: var(--admin-red); }
+        
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--admin-text-light);
+            font-weight: 600;
+        }
+        
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            opacity: 0.2;
+        }
+        
+        .stat-card.blue .stat-icon { background: var(--admin-blue); }
+        .stat-card.green .stat-icon { background: var(--admin-green); }
+        .stat-card.yellow .stat-icon { background: var(--admin-yellow); }
+        .stat-card.red .stat-icon { background: var(--admin-red); }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--admin-text);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-change {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .stat-change.up {
+            color: var(--admin-green);
+        }
+        
+        .stat-change.down {
+            color: var(--admin-red);
+        }
+        
+        /* Content Cards */
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--admin-text);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+            
+            .admin-sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .admin-main {
+                margin-left: 0;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">🌿</div>
+                <div class="sidebar-title">Taza Qala</div>
+            </div>
+            
+            <div class="sidebar-user">
+                <div class="user-avatar">{{ current_user.username[0].upper() if current_user.is_authenticated else 'A' }}</div>
+                <div class="user-info">
+                    <div class="user-name">Добро пожаловать, {{ current_user.username if current_user.is_authenticated else 'Админ' }}</div>
+                    <div class="user-role">{{ 'Администратор' if current_user.role == 'admin' else 'Модератор' if current_user.is_authenticated else 'Гость' }}</div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <div class="menu-section">
+                    <div class="menu-section-title">Главное</div>
+                    <a href="{{ url_for('admin.dashboard') }}" class="menu-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Дашборд</span>
+                    </a>
+                    <a href="{{ url_for('admin.reports') }}" class="menu-item {% if request.endpoint == 'admin.reports' %}active{% endif %}">
+                        <i class="bi bi-file-earmark-image"></i>
+                        <span>Репорты</span>
+                        {% if pending_count > 0 %}
+                        <span class="menu-badge">{{ pending_count }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{{ url_for('admin.users') }}" class="menu-item {% if request.endpoint == 'admin.users' %}active{% endif %}">
+                        <i class="bi bi-people"></i>
+                        <span>Пользователи</span>
+                    </a>
+                </div>
+                
+                <div class="menu-section">
+                    <div class="menu-section-title">Управление</div>
+                    <a href="{{ url_for('admin.rewards') }}" class="menu-item {% if request.endpoint == 'admin.rewards' %}active{% endif %}">
+                        <i class="bi bi-gift"></i>
+                        <span>Призы</span>
+                    </a>
+                    <a href="{{ url_for('admin.settings') }}" class="menu-item {% if request.endpoint == 'admin.settings' %}active{% endif %}">
+                        <i class="bi bi-gear"></i>
+                        <span>Настройки</span>
+                    </a>
+                    <a href="{{ url_for('admin.statistics') }}" class="menu-item {% if request.endpoint == 'admin.statistics' %}active{% endif %}">
+                        <i class="bi bi-graph-up"></i>
+                        <span>Статистика</span>
+                    </a>
+                </div>
+                
+                <div class="menu-section">
+                    <div class="menu-section-title">Система</div>
+                    <a href="{{ url_for('main.index') }}" class="menu-item">
+                        <i class="bi bi-house"></i>
+                        <span>На сайт</span>
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}" class="menu-item">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Выход</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="admin-main">
+            <header class="admin-header">
+                <h1 class="header-title">{% block header_title %}Админ-панель{% endblock %}</h1>
+                <div class="header-actions">
+                    <div class="header-icon">
+                        <i class="bi bi-bell"></i>
+                        {% if notification_count > 0 %}
+                        <span class="icon-badge">{{ notification_count }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="header-icon">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                    <a href="{{ url_for('auth.profile') }}" class="header-icon">
+                        <i class="bi bi-person-circle"></i>
+                    </a>
+                </div>
+            </header>
+            
+            <div class="admin-content">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}" style="padding: 1rem; margin-bottom: 1rem; border-radius: 8px; background: {% if category == 'success' %}#dcfce7{% elif category == 'danger' %}#fee2e2{% else %}#dbeafe{% endif %}; color: {% if category == 'success' %}#16a34a{% elif category == 'danger' %}#dc2626{% else %}#2563eb{% endif %};">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

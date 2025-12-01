@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Чистый Алматы{% endblock %} - Taza Qala</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Leaflet for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            /* Казахстанские цвета флага */
+            --kz-blue: #00AFCA;
+            /* Голубой цвет флага Казахстана */
+            --kz-gold: #FFD700;
+            /* Золотой цвет флага Казахстана */
+            --kz-blue-dark: #0088A3;
+            /* Темно-голубой */
+            --kz-gold-dark: #D4AF37;
+            /* Темно-золотой */
+
+            /* Основные цвета */
+            --green-lime: #66BB6A;
+            --blue-ice: #42A5F5;
+            --white: #FFFFFF;
+            --graphite: #263238;
+            --apple-red: #E53935;
+            --bg-light: #F5F8FA;
+            --shadow: rgba(0, 0, 0, 0.08);
+        }
+
+        /* Казахский орнамент - декоративный элемент */
+        .kazakh-ornament {
+            background-image: repeating-linear-gradient(45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(0, 175, 202, 0.05) 10px,
+                    rgba(0, 175, 202, 0.05) 20px);
+        }
+
+        /* Декоративный орнамент для фона */
+        .ornament-pattern {
+            position: relative;
+        }
+
+        .ornament-pattern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg,
+                    var(--kz-blue) 0%,
+                    var(--kz-gold) 50%,
+                    var(--kz-blue) 100%);
+            opacity: 0.3;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            background: var(--bg-light);
+            color: var(--graphite);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--white);
+            box-shadow: 0 2px 10px var(--shadow);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 3px solid var(--kz-blue);
+            position: relative;
+        }
+
+        .navbar::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg,
+                    var(--kz-blue) 0%,
+                    var(--kz-gold) 50%,
+                    var(--kz-blue) 100%);
+        }
+
+        .navbar-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+        }
+
+        .logo img {
+            height: 65px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--kz-blue) 0%, var(--kz-gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--graphite);
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--kz-blue);
+        }
+
+        .btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--kz-blue) 0%, var(--kz-blue-dark) 100%);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--kz-blue-dark) 0%, var(--kz-blue) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 175, 202, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--blue-ice);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #2196F3;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--green-lime);
+            color: var(--green-lime);
+        }
+
+        .btn-outline:hover {
+            background: var(--green-lime);
+            color: white;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Flash messages */
+        .flash-messages {
+            max-width: 1400px;
+            margin: 1rem auto;
+            padding: 0 2rem;
+        }
+
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid var(--green-lime);
+        }
+
+        .alert-danger {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid var(--apple-red);
+        }
+
+        .alert-info {
+            background: #e3f2fd;
+            color: #1565c0;
+            border-left: 4px solid var(--blue-ice);
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, var(--graphite) 0%, #1a2529 100%);
+            color: white;
+            padding: 3rem 2rem 2rem;
+            margin-top: 4rem;
+            position: relative;
+        }
+
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg,
+                    var(--kz-blue) 0%,
+                    var(--kz-gold) 50%,
+                    var(--kz-blue) 100%);
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .footer-section h3 {
+            color: var(--kz-gold);
+            margin-bottom: 1rem;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .footer-section a:hover {
+            opacity: 1;
+        }
+
+        .footer-bottom {
+            max-width: 1400px;
+            margin: 2rem auto 0;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        /* Mobile menu */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--graphite);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .nav-links.mobile-open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 80px;
+                left: 0;
+                right: 0;
+                background: white;
+                padding: 1rem;
+                box-shadow: 0 4px 12px var(--shadow);
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .logo img {
+                height: 50px;
+            }
+
+            .logo-text {
+                font-size: 1rem;
+            }
+        }
+
+        {% block extra_css %}{% endblock %}
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="{{ url_for('main.index') }}" class="logo">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Чистый Алматы">
+                <span class="logo-text">ЧИСТЫЙ АЛМАТЫ</span>
+            </a>
+
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <ul class="nav-links" id="navLinks">
+                <li><a href="{{ url_for('main.index') }}"><i class="bi bi-house"></i> Главная</a></li>
+                <li><a href="{{ url_for('main.map') }}"><i class="bi bi-map"></i> Карта</a></li>
+                <li><a href="{{ url_for('main.leaderboard') }}"><i class="bi bi-trophy"></i> Лидерборд</a></li>
+                <li><a href="{{ url_for('main.rewards') }}"><i class="bi bi-gift"></i> Призы</a></li>
+                {% if current_user.is_authenticated and current_user.role in ['admin', 'moderator'] %}
+                {% endif %}
+
+                {% if current_user.is_authenticated %}
+                <li><a href="{{ url_for('auth.profile') }}"><i class="bi bi-person-circle"></i> Профиль</a></li>
+                {% if current_user.role in ['admin', 'moderator'] %}
+                <li><a href="{{ url_for('admin.dashboard') }}"><i class="bi bi-shield-check"></i> Админ</a></li>
+                {% endif %}
+                {% if current_user.is_cleaner %}
+                <li><a href="{{ url_for('cleaner.dashboard') }}"><i class="bi bi-brush"></i> Клинер</a></li>
+                {% endif %}
+                <li><a href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Выход</a></li>
+                {% else %}
+                <li><a href="{{ url_for('auth.login') }}">Вход</a></li>
+                <li><a href="{{ url_for('auth.register') }}" class="btn btn-primary">Регистрация</a></li>
+                {% endif %}
+
+                <li><a href="{{ url_for('reports.new_report') }}" class="btn btn-primary"><i class="bi bi-camera"></i>
+                        Сообщить</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            <i
+                class="bi bi-{{ 'check-circle' if category == 'success' else 'info-circle' if category == 'info' else 'exclamation-triangle' }}"></i>
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Main content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>О проекте</h3>
+                <p>Гражданская платформа для создания чистого Алматы через участие каждого жителя.</p>
+            </div>
+
+            <div class="footer-section">
+                <h3>Ссылки</h3>
+                <ul>
+                    <li><a href="{{ url_for('main.about') }}">О нас</a></li>
+                    <li><a href="#">Как это работает</a></li>
+                    <li><a href="#">FAQ</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-section">
+                <h3>Контакты</h3>
+                <ul>
+                    <li><i class="bi bi-envelope"></i> info@tazaqala.kz</li>
+                    <li><i class="bi bi-telegram"></i> @tazaqala</li>
+                    <li><i class="bi bi-instagram"></i> @tazaqala</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>&copy; 2025 Чистый Алматы / Taza Qala. Вместе к чистоте!</p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleMobileMenu() {
+            document.getElementById('navLinks').classList.toggle('mobile-open');
+        }
+
+        // Auto-hide flash messages after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>
