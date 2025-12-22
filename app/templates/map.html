@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Карта загрязнений - Чистый Алматы{% endblock %}
+{% block title %}Карта загрязнений — TazaQala | Интерактивная карта экологических нарушений{% endblock %}
+
+{% block meta_description %}Интерактивная карта загрязнений и мусора в городе. Смотрите все репорты в реальном времени, фильтруйте по статусу и типу. TazaQala — вместе к чистоте!{% endblock %}
+
+{% block meta_keywords %}карта загрязнений, карта мусора, экологическая карта, загрязнения города, репорты о мусоре, TazaQala, таза қала, қоқыс картасы, ластану картасы{% endblock %}
+
+{% block og_title %}Карта загрязнений — TazaQala{% endblock %}
+
+{% block og_description %}Интерактивная карта экологических нарушений. Отслеживайте репорты о мусоре и загрязнениях в реальном времени.{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -472,7 +480,7 @@
             <div class="legend">
                 <h4>Легенда</h4>
                 <div class="legend-item">
-                    <div class="legend-color" style="background: #E53935; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>
+                    <div class="legend-color" style="background: #66BB6A; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>
                     <span>Подтверждено</span>
                 </div>
                 <div class="legend-item">
@@ -571,7 +579,7 @@
             }
             
             // Determine marker color based on status - простые яркие цвета
-            let color = '#E53935'; // red for confirmed
+            let color = '#66BB6A'; // green for confirmed
             let statusText = 'Подтверждено';
             if (report.status === 'cleaned') {
                 color = '#66BB6A'; // green

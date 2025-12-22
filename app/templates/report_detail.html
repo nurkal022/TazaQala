@@ -184,10 +184,18 @@
         attribution: '&copy; OpenStreetMap'
     }).addTo(map);
     
-    // Add marker
+    // Add marker with dynamic color based on status
+    let markerColor = '#66BB6A'; // green for confirmed
+    {% if report.status == 'cleaned' %}
+    markerColor = '#66BB6A'; // green
+    {% elif report.status == 'pending' %}
+    markerColor = '#FFB300'; // yellow
+    {% elif report.status == 'rejected' %}
+    markerColor = '#9E9E9E'; // gray
+    {% endif %}
     const icon = L.divIcon({
         className: 'custom-marker',
-        html: '<div style="background-color: #E53935; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>',
+        html: '<div style="background-color: ' + markerColor + '; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>',
         iconSize: [30, 30]
     });
     

@@ -241,7 +241,7 @@
         <div class="legend">
             <h4 style="margin-bottom: 0.5rem;">Легенда:</h4>
             <div class="legend-item">
-                <div class="legend-color" style="background: #E53935;"></div>
+                <div class="legend-color" style="background: #66BB6A;"></div>
                 <span>Подтверждено</span>
             </div>
             <div class="legend-item">
@@ -291,7 +291,7 @@
         
         reports.forEach(report => {
             // Determine marker color based on status
-            let color = '#E53935'; // red for confirmed
+            let color = '#66BB6A'; // green for confirmed
             if (report.status === 'cleaned') color = '#66BB6A'; // green
             if (report.status === 'pending') color = '#FFB300'; // yellow
             
