@@ -61,9 +61,17 @@ def login():
         password = request.form.get('password')
         remember = request.form.get('remember', False)
         
+        if not username or not password:
+            flash('Заполните все поля', 'danger')
+            return render_template('admin/login.html')
+        
         user = User.query.filter_by(username=username).first()
         
-        if user is None or not user.check_password(password):
+        if user is None:
+            flash('Неверное имя пользователя или пароль', 'danger')
+            return render_template('admin/login.html')
+        
+        if not user.check_password(password):
             flash('Неверное имя пользователя или пароль', 'danger')
             return render_template('admin/login.html')
         
