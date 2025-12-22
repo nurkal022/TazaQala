@@ -2,24 +2,53 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user, login_user
 from functools import wraps
 from urllib.parse import urlparse
+from werkzeug.utils import secure_filename
 from app import db
 from app.models import Report, User, Notification
 from datetime import datetime
+import os
+import uuid
 
 bp = Blueprint('admin', __name__, url_prefix='/admin')
 
+
 def admin_required(f):
-    """Декоратор для проверки прав администратора"""
+    """Декоратор для проверки прав администратора или модератора"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated:
-            flash('Пожалуйста, войдите в систему администратора', 'warning')
+            flash('Пожалуйста, войдите в систему', 'warning')
             return redirect(url_for('admin.login', next=request.url))
         if current_user.role not in ['admin', 'moderator']:
             flash('У вас нет доступа к этой странице', 'danger')
             return redirect(url_for('main.index'))
         return f(*args, **kwargs)
     return decorated_function
+
+
+def admin_only_required(f):
+    """Декоратор для проверки прав ТОЛЬКО администратора"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            flash('Пожалуйста, войдите в систему', 'warning')
+            return redirect(url_for('admin.login', next=request.url))
+        if current_user.role != 'admin':
+            flash('Эта страница доступна только администратору', 'danger')
+            return redirect(url_for('admin.dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def get_common_context():
+    """Общий контекст для всех страниц админки"""
+    return {
+        'pending_count': Report.query.filter_by(status='pending').count(),
+        'in_progress_count': Report.query.filter_by(status='in_progress').count(),
+        'pending_verification_count': Report.query.filter_by(status='pending_verification').count(),
+        'notification_count': Notification.query.filter_by(is_read=False).count() if hasattr(Notification, 'is_read') else 0
+    }
+
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -38,12 +67,10 @@ def login():
             flash('Неверное имя пользователя или пароль', 'danger')
             return render_template('admin/login.html')
         
-        # Проверяем права администратора
         if user.role not in ['admin', 'moderator']:
             flash('У вас нет прав доступа к админ-панели', 'danger')
             return render_template('admin/login.html')
         
-        # Обновляем время последнего входа
         user.last_login = datetime.utcnow()
         db.session.commit()
         
@@ -53,58 +80,64 @@ def login():
         if not next_page or urlparse(next_page).netloc != '':
             next_page = url_for('admin.dashboard')
         
-        flash(f'Добро пожаловать в админ-панель, {user.username}!', 'success')
+        flash(f'Добро пожаловать, {user.username}!', 'success')
         return redirect(next_page)
     
     return render_template('admin/login.html')
+
 
 @bp.route('/')
 @login_required
 @admin_required
 def dashboard():
-    """Админ-панель - главная"""
-    from sqlalchemy import func
+    """Дашборд — главная страница админки"""
+    ctx = get_common_context()
     
-    # Репорты, ожидающие модерации
-    pending_reports = Report.query.filter_by(ai_status='needs_review')\
+    # Новые репорты (ожидают модерации)
+    pending_reports = Report.query.filter_by(status='pending')\
         .order_by(Report.created_at.desc())\
         .limit(20)\
         .all()
     
-    # Репорты, ожидающие проверки уборки
-    pending_verification_reports = Report.query.filter_by(status='pending_verification')\
-        .order_by(Report.cleaned_at.desc())\
+    # Репорты в работе (для модератора)
+    in_progress_reports = Report.query.filter_by(status='in_progress')\
+        .order_by(Report.created_at.desc())\
+        .limit(20)\
         .all()
+    
+    # Репорты на финальной проверке (только для админа)
+    pending_verification_reports = []
+    if current_user.role == 'admin':
+        pending_verification_reports = Report.query.filter_by(status='pending_verification')\
+            .order_by(Report.cleaned_at.desc())\
+            .all()
     
     # Статистика
     stats = {
-        'pending_moderation': Report.query.filter_by(ai_status='needs_review').count(),
-        'pending_verification': Report.query.filter_by(status='pending_verification').count(),
+        'pending': ctx['pending_count'],
+        'in_progress': ctx['in_progress_count'],
+        'pending_verification': ctx['pending_verification_count'],
         'total_reports': Report.query.count(),
         'total_users': User.query.count(),
-        'ai_auto_confirmed': Report.query.filter_by(ai_status='auto_confirmed').count(),
         'confirmed': Report.query.filter_by(status='confirmed').count(),
         'cleaned': Report.query.filter_by(status='cleaned').count(),
         'rejected': Report.query.filter_by(status='rejected').count(),
-        'pending_count': Report.query.filter_by(ai_status='needs_review').count()
     }
     
-    # Для боковой панели
-    pending_count = stats['pending_moderation']
-    notification_count = Notification.query.filter_by(is_read=False).count() if hasattr(Notification, 'is_read') else 0
-    
-    return render_template('admin/dashboard.html', 
-                         reports=pending_reports,
+    return render_template('admin/dashboard.html',
+                         pending_reports=pending_reports,
+                         in_progress_reports=in_progress_reports,
                          pending_verification_reports=pending_verification_reports,
                          stats=stats,
-                         pending_count=pending_count,
-                         notification_count=notification_count)
+                         **ctx)
+
 
 @bp.route('/reports')
 @login_required
 @admin_required
 def reports():
     """Все репорты"""
+    ctx = get_common_context()
     page = request.args.get('page', 1, type=int)
     status = request.args.get('status')
     
@@ -116,67 +149,43 @@ def reports():
     reports = query.order_by(Report.created_at.desc())\
         .paginate(page=page, per_page=current_app.config['REPORTS_PER_PAGE'], error_out=False)
     
-    pending_count = Report.query.filter_by(ai_status='needs_review').count()
-    notification_count = Notification.query.filter_by(is_read=False).count() if hasattr(Notification, 'is_read') else 0
-    
     return render_template('admin/reports.html', 
                          reports=reports,
-                         pending_count=pending_count,
-                         notification_count=notification_count)
+                         **ctx)
+
 
 @bp.route('/report/<int:report_id>/moderate', methods=['POST'])
 @login_required
 @admin_required
 def moderate_report(report_id):
-    """Модерация репорта"""
+    """Модерация репорта: отклонить или взять в работу"""
     report = Report.query.get_or_404(report_id)
     
-    action = request.form.get('action')  # approve, reject
+    action = request.form.get('action')  # take_work, reject
     comment = request.form.get('comment', '')
     
-    if action == 'approve':
-        report.status = 'confirmed'
-        report.ai_status = 'auto_confirmed'  # Обновляем AI статус, чтобы репорт исчез из списка "на проверке"
+    if action == 'take_work':
+        # Взять в работу → статус in_progress
+        report.status = 'in_progress'
         report.moderator_id = current_user.id
         report.moderation_comment = comment
         report.moderated_at = datetime.utcnow()
         
-        # Начисляем баллы автору
-        if report.author:
-            points = current_app.config['POINTS_CONFIRMED_REPORT']
-            if report.description:
-                points += current_app.config['POINTS_WITH_GPS_COMMENT']
-            
-            report.author.add_points(points)
-            report.author.confirmed_reports += 1
-            
-            # Уведомление
-            notification = Notification(
-                user_id=report.author.id,
-                message=f'Ваш репорт #{report.id} подтвержден модератором! +{points} баллов.',
-                notification_type='report_confirmed',
-                related_report_id=report.id
-            )
-            db.session.add(notification)
-        
-        flash('Репорт подтвержден', 'success')
+        flash(f'Репорт #{report.id} взят в работу', 'success')
     
     elif action == 'reject':
         report.status = 'rejected'
-        report.ai_status = 'rejected'  # Обновляем AI статус
         report.moderator_id = current_user.id
         report.moderation_comment = comment
         report.moderated_at = datetime.utcnow()
         
-        # Штраф за фейк (если есть комментарий "фейк")
-        if report.author and 'фейк' in comment.lower():
-            report.author.add_points(current_app.config['POINTS_FAKE_PENALTY'])
+        # Уведомление автору
+        if report.author:
             report.author.rejected_reports += 1
             
-            # Уведомление
             notification = Notification(
                 user_id=report.author.id,
-                message=f'Ваш репорт #{report.id} отклонен: {comment}',
+                message=f'Ваш репорт #{report.id} отклонен. {comment}',
                 notification_type='report_rejected',
                 related_report_id=report.id
             )
@@ -191,33 +200,201 @@ def moderate_report(report_id):
     
     return redirect(url_for('admin.dashboard'))
 
-@bp.route('/users')
+
+@bp.route('/report/<int:report_id>/complete', methods=['GET', 'POST'])
 @login_required
 @admin_required
+def complete_cleanup(report_id):
+    """Страница завершения уборки модератором"""
+    report = Report.query.get_or_404(report_id)
+    ctx = get_common_context()
+    
+    if report.status != 'in_progress':
+        flash('Этот репорт не в статусе "В работе"', 'warning')
+        return redirect(url_for('admin.dashboard'))
+    
+    if request.method == 'POST':
+        after_photo = request.files.get('after_photo')
+        doc_photo = request.files.get('doc_photo')
+        
+        if not after_photo or not doc_photo:
+            flash('Необходимо загрузить фото ПОСЛЕ и документ', 'danger')
+            return redirect(url_for('admin.complete_cleanup', report_id=report_id))
+        
+        # Создаем директорию
+        cleanup_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'cleanup')
+        os.makedirs(cleanup_dir, exist_ok=True)
+        
+        # Сохраняем фото ПОСЛЕ
+        after_filename = f"after_{uuid.uuid4().hex}_{secure_filename(after_photo.filename)}"
+        after_path = os.path.join(cleanup_dir, after_filename)
+        after_photo.save(after_path)
+        
+        # Сохраняем документ
+        doc_filename = f"doc_{uuid.uuid4().hex}_{secure_filename(doc_photo.filename)}"
+        doc_path = os.path.join(cleanup_dir, doc_filename)
+        doc_photo.save(doc_path)
+        
+        # Обновляем репорт
+        report.status = 'pending_verification'
+        report.cleaned_at = datetime.utcnow()
+        report.cleaned_by_id = current_user.id
+        report.cleaned_photo_path = f"cleanup/{after_filename}"
+        report.disposal_document_path = f"cleanup/{doc_filename}"
+        
+        # Уведомление админам
+        admins = User.query.filter_by(role='admin').all()
+        for admin in admins:
+            notification = Notification(
+                user_id=admin.id,
+                message=f'Репорт #{report.id} ожидает финальной проверки от {current_user.username}',
+                notification_type='cleanup_verification',
+                related_report_id=report.id
+            )
+            db.session.add(notification)
+        
+        db.session.commit()
+        
+        flash('Уборка отправлена на финальную проверку администратору!', 'success')
+        return redirect(url_for('admin.dashboard'))
+    
+    return render_template('admin/complete_cleanup.html', report=report, **ctx)
+
+
+@bp.route('/final-verification')
+@login_required
+@admin_only_required
+def final_verification():
+    """Страница финальной проверки (только для админа)"""
+    ctx = get_common_context()
+    
+    reports = Report.query.filter_by(status='pending_verification')\
+        .order_by(Report.cleaned_at.desc())\
+        .all()
+    
+    return render_template('admin/final_verification.html', reports=reports, **ctx)
+
+
+@bp.route('/verify-cleanup/<int:report_id>')
+@login_required
+@admin_only_required
+def verify_cleanup(report_id):
+    """Страница проверки конкретной уборки"""
+    report = Report.query.get_or_404(report_id)
+    ctx = get_common_context()
+    
+    if report.status != 'pending_verification':
+        flash('Этот репорт не требует проверки', 'warning')
+        return redirect(url_for('admin.final_verification'))
+    
+    # Получаем модератора, который выполнил уборку
+    cleaner = User.query.get(report.cleaned_by_id) if report.cleaned_by_id else None
+    
+    return render_template('admin/verify_cleanup.html', report=report, cleaner=cleaner, **ctx)
+
+
+@bp.route('/verify-cleanup/<int:report_id>/approve', methods=['POST'])
+@login_required
+@admin_only_required
+def approve_cleanup(report_id):
+    """Подтвердить уборку (финальная проверка)"""
+    report = Report.query.get_or_404(report_id)
+    
+    if report.status != 'pending_verification':
+        flash('Этот репорт не требует проверки', 'warning')
+        return redirect(url_for('admin.final_verification'))
+    
+    # Финальный статус
+    report.status = 'cleaned'
+    report.moderator_id = current_user.id
+    report.moderated_at = datetime.utcnow()
+    
+    # Начисляем баллы модератору/клинеру
+    if report.cleaned_by_id:
+        cleaner = User.query.get(report.cleaned_by_id)
+        if cleaner:
+            cleaner.add_points(current_app.config.get('POINTS_CLEANED_REPORT', 20))
+            
+            notification = Notification(
+                user_id=cleaner.id,
+                message=f'Уборка репорта #{report.id} подтверждена администратором! +{current_app.config.get("POINTS_CLEANED_REPORT", 20)} баллов.',
+                notification_type='cleanup_approved',
+                related_report_id=report.id
+            )
+            db.session.add(notification)
+    
+    # Бонус автору репорта
+    if report.author:
+        bonus_points = 10
+        report.author.add_points(bonus_points)
+        
+        notification = Notification(
+            user_id=report.author.id,
+            message=f'Ваш репорт #{report.id} очищен! +{bonus_points} бонусных баллов.',
+            notification_type='report_cleaned',
+            related_report_id=report.id
+        )
+        db.session.add(notification)
+    
+    db.session.commit()
+    
+    flash('Уборка подтверждена! Баллы начислены.', 'success')
+    return redirect(url_for('admin.final_verification'))
+
+
+@bp.route('/verify-cleanup/<int:report_id>/reject', methods=['POST'])
+@login_required
+@admin_only_required
+def reject_cleanup(report_id):
+    """Отклонить уборку — вернуть в работу"""
+    report = Report.query.get_or_404(report_id)
+    
+    if report.status != 'pending_verification':
+        flash('Этот репорт не требует проверки', 'warning')
+        return redirect(url_for('admin.final_verification'))
+    
+    comment = request.form.get('comment', 'Уборка не соответствует требованиям')
+    
+    # Возвращаем в работу
+    report.status = 'in_progress'
+    report.moderation_comment = comment
+    report.moderated_at = datetime.utcnow()
+    
+    # Уведомление модератору
+    if report.cleaned_by_id:
+        notification = Notification(
+            user_id=report.cleaned_by_id,
+            message=f'Уборка репорта #{report.id} отклонена: {comment}. Требуется переделка.',
+            notification_type='cleanup_rejected',
+            related_report_id=report.id
+        )
+        db.session.add(notification)
+    
+    db.session.commit()
+    
+    flash('Уборка отклонена. Репорт возвращен модератору.', 'info')
+    return redirect(url_for('admin.final_verification'))
+
+
+@bp.route('/users')
+@login_required
+@admin_only_required
 def users():
-    """Управление пользователями"""
+    """Управление пользователями (только для админа)"""
+    ctx = get_common_context()
     page = request.args.get('page', 1, type=int)
     
     users = User.query.order_by(User.total_points.desc())\
         .paginate(page=page, per_page=50, error_out=False)
     
-    pending_count = Report.query.filter_by(ai_status='needs_review').count()
-    notification_count = Notification.query.filter_by(is_read=False).count() if hasattr(Notification, 'is_read') else 0
-    
-    return render_template('admin/users.html', 
-                         users=users,
-                         pending_count=pending_count,
-                         notification_count=notification_count)
+    return render_template('admin/users.html', users=users, **ctx)
+
 
 @bp.route('/user/<int:user_id>/change_role', methods=['POST'])
 @login_required
-@admin_required
+@admin_only_required
 def change_user_role(user_id):
     """Изменить роль пользователя"""
-    if current_user.role != 'admin':
-        flash('Только администратор может изменять роли', 'danger')
-        return redirect(url_for('admin.users'))
-    
     user = User.query.get_or_404(user_id)
     new_role = request.form.get('role')
     
@@ -228,40 +405,38 @@ def change_user_role(user_id):
     
     return redirect(url_for('admin.users'))
 
+
 @bp.route('/rewards')
 @login_required
-@admin_required
+@admin_only_required
 def rewards():
-    """Управление призами"""
+    """Управление призами (только для админа)"""
     from app.models import Reward
+    ctx = get_common_context()
     
     rewards = Reward.query.order_by(Reward.created_at.desc()).all()
-    pending_count = Report.query.filter_by(ai_status='needs_review').count()
-    notification_count = Notification.query.filter_by(is_read=False).count() if hasattr(Notification, 'is_read') else 0
     
-    return render_template('admin/rewards.html', 
-                         rewards=rewards,
-                         pending_count=pending_count,
-                         notification_count=notification_count)
+    return render_template('admin/rewards.html', rewards=rewards, **ctx)
+
 
 @bp.route('/statistics')
 @login_required
-@admin_required
+@admin_only_required
 def statistics():
-    """Статистика с графиками"""
+    """Статистика (только для админа)"""
     from sqlalchemy import func, case
-    from datetime import datetime, timedelta
+    from datetime import timedelta
+    ctx = get_common_context()
     
-    # Основная статистика
     stats = {
         'total_reports': Report.query.count(),
         'cleaned': Report.query.filter_by(status='cleaned').count(),
-        'confirmed': Report.query.filter_by(status='confirmed').count(),
+        'in_progress': Report.query.filter_by(status='in_progress').count(),
         'pending': Report.query.filter_by(status='pending').count(),
         'rejected': Report.query.filter_by(status='rejected').count()
     }
     
-    # Статистика по дням (последние 30 дней)
+    # Статистика по дням
     daily_stats = {'labels': [], 'values': []}
     for i in range(29, -1, -1):
         day_start = datetime.utcnow() - timedelta(days=i+1)
@@ -273,7 +448,7 @@ def statistics():
         daily_stats['labels'].append(day_start.strftime('%d.%m'))
         daily_stats['values'].append(count)
     
-    # Статистика по районам для графика
+    # По районам
     district_stats_list = Report.query.with_entities(
         Report.district,
         func.count(Report.id).label('total'),
@@ -286,8 +461,7 @@ def statistics():
         'cleaned': [d.cleaned or 0 for d in district_stats_list[:10]]
     }
     
-    # Статистика по категориям отчетов для графика
-    from sqlalchemy import case
+    # По категориям
     category_stats_list = Report.query.with_entities(
         func.coalesce(Report.report_category, Report.trash_type, 'trash').label('category'),
         func.count(Report.id).label('count')
@@ -301,7 +475,6 @@ def statistics():
         'construction_waste': '🏗️ Строительный мусор',
         'hazardous_waste': '⚠️ Опасные отходы',
         'other': '📋 Другое',
-        # Старые типы для обратной совместимости
         'plastic': 'Пластик',
         'metal': 'Металл/Стекло',
         'organic': 'Органика',
@@ -315,151 +488,33 @@ def statistics():
         'values': [t.count for t in category_stats_list]
     }
     
-    pending_count = Report.query.filter_by(ai_status='needs_review').count()
-    notification_count = Notification.query.filter_by(is_read=False).count() if hasattr(Notification, 'is_read') else 0
-    
     return render_template('admin/statistics.html',
                          stats=stats,
                          daily_stats=daily_stats,
                          district_stats=district_stats_list,
                          district_chart_data=district_chart_data,
                          trash_type_chart_data=trash_type_chart_data,
-                         pending_count=pending_count,
-                         notification_count=notification_count)
+                         **ctx)
+
 
 @bp.route('/settings', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@admin_only_required
 def settings():
-    """Настройки системы"""
-    pending_count = Report.query.filter_by(ai_status='needs_review').count()
-    notification_count = Notification.query.filter_by(is_read=False).count() if hasattr(Notification, 'is_read') else 0
+    """Настройки (только для админа)"""
+    ctx = get_common_context()
     
     stats = {
         'total_reports': Report.query.count(),
         'total_users': User.query.count(),
-        'pending_moderation': Report.query.filter_by(ai_status='needs_review').count()
+        'pending': Report.query.filter_by(status='pending').count()
     }
     
     if request.method == 'POST':
-        # Здесь можно добавить изменение настроек баллов и т.д.
         flash('Настройки обновлены', 'success')
         return redirect(url_for('admin.settings'))
     
     return render_template('admin/settings.html',
                          config=current_app.config,
                          stats=stats,
-                         pending_count=pending_count,
-                         notification_count=notification_count)
-
-
-@bp.route('/verify-cleanup/<int:report_id>')
-@login_required
-@admin_required
-def verify_cleanup(report_id):
-    """Страница проверки уборки"""
-    report = Report.query.get_or_404(report_id)
-    
-    if report.status != 'pending_verification':
-        flash('Этот репорт не требует проверки уборки', 'warning')
-        return redirect(url_for('admin.dashboard'))
-    
-    pending_count = Report.query.filter_by(ai_status='needs_review').count()
-    notification_count = Notification.query.filter_by(is_read=False).count() if hasattr(Notification, 'is_read') else 0
-    
-    return render_template('admin/verify_cleanup.html',
-                         report=report,
-                         pending_count=pending_count,
-                         notification_count=notification_count)
-
-
-@bp.route('/verify-cleanup/<int:report_id>/approve', methods=['POST'])
-@login_required
-@admin_required
-def approve_cleanup(report_id):
-    """Подтвердить уборку"""
-    report = Report.query.get_or_404(report_id)
-    
-    if report.status != 'pending_verification':
-        flash('Этот репорт не требует проверки уборки', 'warning')
-        return redirect(url_for('admin.dashboard'))
-    
-    # Меняем статус на cleaned
-    report.status = 'cleaned'
-    report.moderator_id = current_user.id
-    report.moderated_at = datetime.utcnow()
-    
-    # Начисляем баллы клинеру
-    if report.cleaned_by_id:
-        cleaner = User.query.get(report.cleaned_by_id)
-        if cleaner:
-            cleaner.add_points(20)
-            
-            # Уведомление клинеру
-            notification = Notification(
-                user_id=cleaner.id,
-                message=f'Ваша уборка репорта #{report.id} подтверждена! +20 баллов.',
-                notification_type='cleanup_approved',
-                related_report_id=report.id
-            )
-            db.session.add(notification)
-    
-    # Начисляем баллы автору репорта (бонус за уборку)
-    if report.author:
-        report.author.add_points(current_app.config.get('POINTS_CLEANED_REPORT', 50))
-        
-        # Уведомление автору
-        notification = Notification(
-            user_id=report.author.id,
-            message=f'Ваш репорт #{report.id} убран! Локация очищена.',
-            notification_type='report_cleaned',
-            related_report_id=report.id
-        )
-        db.session.add(notification)
-    
-    db.session.commit()
-    
-    flash('Уборка подтверждена! Баллы начислены.', 'success')
-    return redirect(url_for('admin.dashboard'))
-
-
-@bp.route('/verify-cleanup/<int:report_id>/reject', methods=['POST'])
-@login_required
-@admin_required
-def reject_cleanup(report_id):
-    """Отклонить уборку"""
-    report = Report.query.get_or_404(report_id)
-    
-    if report.status != 'pending_verification':
-        flash('Этот репорт не требует проверки уборки', 'warning')
-        return redirect(url_for('admin.dashboard'))
-    
-    comment = request.form.get('comment', 'Уборка не соответствует требованиям')
-    
-    # Возвращаем статус к confirmed
-    report.status = 'confirmed'
-    report.cleaned_at = None
-    report.cleaned_by_id = None
-    report.cleaned_photo_path = None
-    report.disposal_document_path = None
-    report.moderator_id = current_user.id
-    report.moderation_comment = comment
-    report.moderated_at = datetime.utcnow()
-    
-    # Уведомление клинеру
-    if report.cleaned_by_id:
-        cleaner = User.query.get(report.cleaned_by_id)
-        if cleaner:
-            notification = Notification(
-                user_id=cleaner.id,
-                message=f'Ваша уборка репорта #{report.id} отклонена: {comment}',
-                notification_type='cleanup_rejected',
-                related_report_id=report.id
-            )
-            db.session.add(notification)
-    
-    db.session.commit()
-    
-    flash('Уборка отклонена. Репорт возвращен в статус "Подтвержден".', 'info')
-    return redirect(url_for('admin.dashboard'))
-
+                         **ctx)

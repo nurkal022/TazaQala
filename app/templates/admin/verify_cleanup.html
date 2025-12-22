@@ -18,7 +18,7 @@
 
     .verification-header h1 {
         font-size: 1.8rem;
-        color: var(--graphite);
+        color: var(--admin-text);
         margin-bottom: 0.5rem;
     }
 
@@ -43,7 +43,7 @@
 
     .info-value {
         font-size: 1rem;
-        color: var(--graphite);
+        color: var(--admin-text);
     }
 
     .photos-grid {
@@ -62,13 +62,13 @@
 
     .photo-header {
         padding: 1rem;
-        background: var(--bg-light);
+        background: #f8fafc;
         border-bottom: 2px solid #e0e0e0;
     }
 
     .photo-header h3 {
         font-size: 1.1rem;
-        color: var(--graphite);
+        color: var(--admin-text);
         margin: 0;
     }
 
@@ -87,9 +87,9 @@
 
     .photo-footer {
         padding: 1rem;
-        background: var(--bg-light);
+        background: #f8fafc;
         font-size: 0.9rem;
-        color: #666;
+        color: var(--admin-text-light);
     }
 
     .actions-card {
@@ -102,7 +102,7 @@
     .actions-card h2 {
         font-size: 1.3rem;
         margin-bottom: 1.5rem;
-        color: var(--graphite);
+        color: var(--admin-text);
     }
 
     .action-buttons {
@@ -112,7 +112,7 @@
     }
 
     .btn-approve {
-        background: var(--green-lime);
+        background: var(--admin-green);
         color: white;
         padding: 1rem 2rem;
         border: none;
@@ -124,12 +124,13 @@
     }
 
     .btn-approve:hover {
-        background: #5cb860;
+        background: #047857;
         transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
     }
 
     .btn-reject {
-        background: var(--apple-red);
+        background: var(--admin-red);
         color: white;
         padding: 1rem 2rem;
         border: none;
@@ -141,12 +142,13 @@
     }
 
     .btn-reject:hover {
-        background: #d32f2f;
+        background: #b91c1c;
         transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
     }
 
     .btn-back {
-        background: #666;
+        background: #64748b;
         color: white;
         padding: 1rem 2rem;
         border: none;
@@ -159,7 +161,7 @@
     }
 
     .btn-back:hover {
-        background: #555;
+        background: #475569;
         color: white;
     }
 
@@ -180,7 +182,7 @@
         display: block;
         margin-bottom: 0.5rem;
         font-weight: 600;
-        color: var(--graphite);
+        color: var(--admin-text);
     }
 
     .form-group textarea {
@@ -203,7 +205,7 @@
 
 {% block content %}
 <div class="verification-page">
-    <div class="container">
+    <div>
         <div class="verification-header">
             <h1>🔍 Проверка уборки репорта #{{ report.id }}</h1>
 
@@ -227,9 +229,13 @@
                 </div>
             </div>
 
-            {% if report.cleaned_by %}
+            {% if cleaner %}
             <div class="cleaner-info">
-                <strong>Клинер:</strong> {{ report.cleaned_by.full_name or report.cleaned_by.username }}
+                <strong>Модератор:</strong> {{ cleaner.full_name or cleaner.username }}
+            </div>
+            {% elif report.cleaned_by_id %}
+            <div class="cleaner-info">
+                <strong>Модератор ID:</strong> {{ report.cleaned_by_id }}
             </div>
             {% endif %}
         </div>

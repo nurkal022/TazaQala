@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Админ-панель{% endblock %} - Taza Qala</title>
+    <title>{% block title %}Админ-панель{% endblock %} - TazaQala</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
     
     <!-- Fonts -->
@@ -33,6 +33,7 @@
             --admin-red: #dc2626;
             --admin-yellow: #f59e0b;
             --admin-blue: #3b82f6;
+            --admin-purple: #8b5cf6;
         }
         
         body {
@@ -117,6 +118,23 @@
             opacity: 0.8;
         }
         
+        .role-badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .role-badge.admin {
+            background: var(--admin-red);
+        }
+        
+        .role-badge.moderator {
+            background: var(--admin-purple);
+        }
+        
         .sidebar-menu {
             padding: 1rem 0;
         }
@@ -173,6 +191,14 @@
             border-radius: 10px;
             font-size: 0.7rem;
             font-weight: 700;
+        }
+        
+        .menu-badge.yellow {
+            background: var(--admin-yellow);
+        }
+        
+        .menu-badge.red {
+            background: var(--admin-red);
         }
         
         /* Main Content */
@@ -271,6 +297,7 @@
         .stat-card.green { border-left-color: var(--admin-green); }
         .stat-card.yellow { border-left-color: var(--admin-yellow); }
         .stat-card.red { border-left-color: var(--admin-red); }
+        .stat-card.purple { border-left-color: var(--admin-purple); }
         
         .stat-header {
             display: flex;
@@ -371,18 +398,27 @@
         <aside class="admin-sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">🌿</div>
-                <div class="sidebar-title">Taza Qala</div>
+                <div class="sidebar-title">TazaQala</div>
             </div>
             
             <div class="sidebar-user">
                 <div class="user-avatar">{{ current_user.username[0].upper() if current_user.is_authenticated else 'A' }}</div>
                 <div class="user-info">
-                    <div class="user-name">Добро пожаловать, {{ current_user.username if current_user.is_authenticated else 'Админ' }}</div>
-                    <div class="user-role">{{ 'Администратор' if current_user.role == 'admin' else 'Модератор' if current_user.is_authenticated else 'Гость' }}</div>
+                    <div class="user-name">{{ current_user.username if current_user.is_authenticated else 'Гость' }}</div>
+                    <div class="user-role">
+                        {% if current_user.role == 'admin' %}
+                            <span class="role-badge admin">Администратор</span>
+                        {% elif current_user.role == 'moderator' %}
+                            <span class="role-badge moderator">Модератор</span>
+                        {% else %}
+                            <span class="role-badge">Гость</span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
             
             <nav class="sidebar-menu">
+                <!-- Основное меню (для всех) -->
                 <div class="menu-section">
                     <div class="menu-section-title">Главное</div>
                     <a href="{{ url_for('admin.dashboard') }}" class="menu-item {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
@@ -396,12 +432,35 @@
                         <span class="menu-badge">{{ pending_count }}</span>
                         {% endif %}
                     </a>
+                    {% if in_progress_count is defined and in_progress_count > 0 %}
+                    <a href="{{ url_for('admin.reports', status='in_progress') }}" class="menu-item {% if request.args.get('status') == 'in_progress' %}active{% endif %}">
+                        <i class="bi bi-gear-wide-connected"></i>
+                        <span>В уборке</span>
+                        <span class="menu-badge yellow">{{ in_progress_count }}</span>
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <!-- Только для админа: Финальная проверка -->
+                {% if current_user.role == 'admin' %}
+                <div class="menu-section">
+                    <div class="menu-section-title">Проверка</div>
+                    <a href="{{ url_for('admin.final_verification') }}" class="menu-item {% if request.endpoint == 'admin.final_verification' %}active{% endif %}">
+                        <i class="bi bi-shield-check"></i>
+                        <span>Финальная проверка</span>
+                        {% if pending_verification_count is defined and pending_verification_count > 0 %}
+                        <span class="menu-badge red">{{ pending_verification_count }}</span>
+                        {% endif %}
+                    </a>
                     <a href="{{ url_for('admin.users') }}" class="menu-item {% if request.endpoint == 'admin.users' %}active{% endif %}">
                         <i class="bi bi-people"></i>
                         <span>Пользователи</span>
                     </a>
                 </div>
+                {% endif %}
                 
+                <!-- Только для админа: Управление -->
+                {% if current_user.role == 'admin' %}
                 <div class="menu-section">
                     <div class="menu-section-title">Управление</div>
                     <a href="{{ url_for('admin.rewards') }}" class="menu-item {% if request.endpoint == 'admin.rewards' %}active{% endif %}">
@@ -417,6 +476,7 @@
                         <span>Статистика</span>
                     </a>
                 </div>
+                {% endif %}
                 
                 <div class="menu-section">
                     <div class="menu-section-title">Система</div>
@@ -471,4 +531,3 @@
     {% block extra_js %}{% endblock %}
 </body>
 </html>
-

@@ -1,0 +1,332 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Завершение уборки{% endblock %}
+{% block header_title %}Завершение уборки репорта #{{ report.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cleanup-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .report-info {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .report-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--admin-text);
+    }
+    
+    .report-meta {
+        font-size: 0.9rem;
+        color: var(--admin-text-light);
+        margin-top: 0.5rem;
+    }
+    
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .status-in-progress {
+        background: #fef3c7;
+        color: #d97706;
+    }
+    
+    .report-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .detail-item {
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 8px;
+    }
+    
+    .detail-label {
+        font-size: 0.8rem;
+        color: var(--admin-text-light);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .detail-value {
+        font-size: 1rem;
+        color: var(--admin-text);
+        font-weight: 500;
+    }
+    
+    .current-photo {
+        margin-bottom: 1.5rem;
+    }
+    
+    .current-photo img {
+        width: 100%;
+        max-width: 400px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .current-photo-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--admin-text);
+        margin-bottom: 0.75rem;
+    }
+    
+    .upload-form {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .form-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--admin-text);
+        margin-bottom: 1.5rem;
+    }
+    
+    .upload-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    @media (max-width: 768px) {
+        .upload-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .upload-item {
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.2s;
+    }
+    
+    .upload-item:hover {
+        border-color: var(--admin-blue);
+        background: #f8fafc;
+    }
+    
+    .upload-item.has-file {
+        border-color: var(--admin-green);
+        background: #f0fdf4;
+    }
+    
+    .upload-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .upload-label {
+        font-weight: 600;
+        color: var(--admin-text);
+        margin-bottom: 0.5rem;
+    }
+    
+    .upload-hint {
+        font-size: 0.85rem;
+        color: var(--admin-text-light);
+        margin-bottom: 1rem;
+    }
+    
+    .upload-input {
+        display: none;
+    }
+    
+    .upload-btn {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: var(--admin-blue);
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+    
+    .upload-btn:hover {
+        background: #2563eb;
+    }
+    
+    .upload-preview {
+        margin-top: 1rem;
+        max-width: 150px;
+        border-radius: 8px;
+        display: none;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        font-size: 1rem;
+    }
+    
+    .btn-primary {
+        background: var(--admin-green);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #047857;
+    }
+    
+    .btn-secondary {
+        background: #e2e8f0;
+        color: var(--admin-text);
+    }
+    
+    .btn-secondary:hover {
+        background: #cbd5e1;
+    }
+    
+    .required-mark {
+        color: var(--admin-red);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cleanup-container">
+    <!-- Информация о репорте -->
+    <div class="report-info">
+        <div class="report-header">
+            <div>
+                <h2 class="report-title">{{ report.address or 'Адрес не указан' }}</h2>
+                <p class="report-meta">
+                    <i class="bi bi-calendar3"></i> {{ report.created_at.strftime('%d.%m.%Y %H:%M') }}
+                    {% if report.author %}
+                    | <i class="bi bi-person"></i> {{ report.author.username }}
+                    {% endif %}
+                </p>
+            </div>
+            <span class="status-badge status-in-progress">🔧 В работе</span>
+        </div>
+        
+        <div class="report-details">
+            <div class="detail-item">
+                <div class="detail-label">Район</div>
+                <div class="detail-value">{{ report.district or 'Не указан' }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Координаты</div>
+                <div class="detail-value">{{ "%.5f"|format(report.latitude) }}, {{ "%.5f"|format(report.longitude) }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="detail-label">Категория</div>
+                <div class="detail-value">{{ report.report_category or report.trash_type or 'Мусор' }}</div>
+            </div>
+        </div>
+        
+        {% if report.description %}
+        <div class="detail-item" style="margin-bottom: 1.5rem;">
+            <div class="detail-label">Описание</div>
+            <div class="detail-value">{{ report.description }}</div>
+        </div>
+        {% endif %}
+        
+        <div class="current-photo">
+            <div class="current-photo-label">📷 Текущее фото (ДО уборки)</div>
+            <img src="{{ report.photo_path | report_photo_url }}" alt="Фото ДО" 
+                 onerror="this.src='{{ url_for('static', filename='image.png') }}'">
+        </div>
+    </div>
+    
+    <!-- Форма загрузки -->
+    <form class="upload-form" method="POST" enctype="multipart/form-data">
+        <h3 class="form-title">📤 Загрузка подтверждений уборки</h3>
+        
+        <div class="upload-grid">
+            <!-- Фото ПОСЛЕ -->
+            <div class="upload-item" id="after-upload">
+                <div class="upload-icon">✅</div>
+                <div class="upload-label">Фото ПОСЛЕ <span class="required-mark">*</span></div>
+                <div class="upload-hint">Фото убранной территории</div>
+                <label class="upload-btn">
+                    Выбрать файл
+                    <input type="file" name="after_photo" class="upload-input" accept="image/*" required onchange="previewImage(this, 'after-preview', 'after-upload')">
+                </label>
+                <img id="after-preview" class="upload-preview" alt="Превью">
+            </div>
+            
+            <!-- Документ -->
+            <div class="upload-item" id="doc-upload">
+                <div class="upload-icon">📄</div>
+                <div class="upload-label">Документ <span class="required-mark">*</span></div>
+                <div class="upload-hint">Акт или сопроводительный документ</div>
+                <label class="upload-btn">
+                    Выбрать файл
+                    <input type="file" name="doc_photo" class="upload-input" accept="image/*,.pdf" required onchange="previewImage(this, 'doc-preview', 'doc-upload')">
+                </label>
+                <img id="doc-preview" class="upload-preview" alt="Превью">
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">Отмена</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-send"></i> Отправить на проверку
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function previewImage(input, previewId, uploadId) {
+    const preview = document.getElementById(previewId);
+    const uploadItem = document.getElementById(uploadId);
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            uploadItem.classList.add('has-file');
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+{% endblock %}
+
