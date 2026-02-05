@@ -124,9 +124,19 @@ class Report(db.Model):
     # Timestamps
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    deleted_at = db.Column(db.DateTime, nullable=True, index=True)  # Soft delete
     
     def __repr__(self):
         return f'<Report {self.id} - {self.status}>'
+    
+    def is_deleted(self):
+        """Проверка, удален ли репорт"""
+        return self.deleted_at is not None
+    
+    def soft_delete(self):
+        """Мягкое удаление репорта (сохраняет ID)"""
+        self.deleted_at = datetime.utcnow()
+        self.status = 'deleted'
 
 
 class Badge(db.Model):

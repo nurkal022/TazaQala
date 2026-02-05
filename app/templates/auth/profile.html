@@ -233,7 +233,7 @@
                 </div>
                 <div class="stat-box">
                     <div class="stat-box-value">{{ current_user.confirmed_reports }}</div>
-                    <div class="stat-box-label">Подтверждено</div>
+                    <div class="stat-box-label">Принято</div>
                 </div>
                 <div class="stat-box">
                     <div class="stat-box-value">{{ badges|length }}</div>
@@ -290,7 +290,7 @@
                         <div class="report-info">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                                 <span class="report-status status-{{ report.status }}">
-                                    {{ 'Подтверждено' if report.status == 'confirmed' else 'На проверке' if report.status == 'pending' else 'Убрано' if report.status == 'cleaned' else 'Отклонено' }}
+                                    {{ 'Убрано' if report.status == 'cleaned' else 'В работе' if report.status == 'in_progress' else 'На проверке уборки' if report.status == 'pending_verification' else 'На рассмотрении' if report.status in ['pending', 'confirmed'] else 'Отклонено' }}
                                 </span>
                                 <span style="color: #757575; font-size: 0.85rem;">
                                     {{ report.created_at.strftime('%d.%m.%Y %H:%M') }}

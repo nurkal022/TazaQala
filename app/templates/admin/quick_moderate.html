@@ -1,0 +1,242 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Быстрая модерация{% endblock %}
+{% block header_title %}Быстрая модерация репортов{% endblock %}
+
+{% block extra_css %}
+<style>
+    .quick-moderate-wrap {
+        max-width: 560px;
+        margin: 0 auto;
+        min-height: calc(100vh - 120px);
+        display: flex;
+        flex-direction: column;
+        padding: 0 1rem 2rem;
+    }
+    
+    .quick-card {
+        background: var(--admin-card);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .quick-card-image-wrap {
+        position: relative;
+        width: 100%;
+        padding-top: 75%;
+        background: #1a1a2e;
+        overflow: hidden;
+    }
+    
+    .quick-card-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .quick-card-id {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+    
+    .quick-card-body {
+        padding: 1.25rem 1.5rem;
+        flex: 1;
+    }
+    
+    .quick-card-address {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--admin-text);
+        margin-bottom: 0.5rem;
+    }
+    
+    .quick-card-meta {
+        font-size: 0.9rem;
+        color: var(--admin-text-light);
+        margin-bottom: 0.75rem;
+    }
+    
+    .quick-card-desc {
+        font-size: 0.95rem;
+        color: var(--admin-text);
+        line-height: 1.4;
+    }
+    
+    .quick-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        padding: 1.5rem 1rem;
+        background: var(--admin-card);
+    }
+    
+    .quick-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 1.25rem 1.5rem;
+        border: none;
+        border-radius: 16px;
+        font-size: 1.15rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.15s, box-shadow 0.15s;
+        text-decoration: none;
+        font-family: inherit;
+    }
+    
+    .quick-btn:active {
+        transform: scale(0.98);
+    }
+    
+    .quick-btn-approve {
+        background: var(--admin-green);
+        color: white;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.4);
+    }
+    
+    .quick-btn-approve:hover {
+        background: var(--admin-green-light);
+        box-shadow: 0 6px 20px rgba(5, 150, 105, 0.5);
+    }
+    
+    .quick-btn-reject {
+        background: var(--admin-red);
+        color: white;
+        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+    }
+    
+    .quick-btn-reject:hover {
+        background: #ef4444;
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+    }
+    
+    .quick-empty {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--admin-card);
+        border-radius: 20px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    
+    .quick-empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+    
+    .quick-empty-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--admin-text);
+        margin-bottom: 0.5rem;
+    }
+    
+    .quick-empty-text {
+        color: var(--admin-text-light);
+        margin-bottom: 1.5rem;
+    }
+    
+    .quick-empty-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: var(--admin-green);
+        color: white;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    
+    .quick-empty-link:hover {
+        background: var(--admin-green-light);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="quick-moderate-wrap">
+    {% if report %}
+    <div class="quick-card">
+        <div class="quick-card-image-wrap">
+            <span class="quick-card-id">#{{ report.id }}</span>
+            <img src="{{ report.photo_path | report_photo_url }}" 
+                 class="quick-card-image" 
+                 alt="Репорт"
+                 onerror="this.src='{{ url_for('static', filename='image.png') }}'">
+        </div>
+        <div class="quick-card-body">
+            <div class="quick-card-address">{{ report.address or 'Адрес не указан' }}</div>
+            <div class="quick-card-meta">
+                {{ report.district or '-' }} · {{ report.created_at.strftime('%d.%m.%Y %H:%M') }}
+                {% if report.ai_confidence %}
+                · AI {{ (report.ai_confidence * 100) | round }}%
+                {% endif %}
+            </div>
+            {% if report.description %}
+            <div class="quick-card-desc">{{ report.description }}</div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="quick-actions">
+        <form method="POST" action="{{ url_for('admin.quick_moderate_action', report_id=report.id) }}" style="display: block;">
+            <input type="hidden" name="action" value="reject">
+            <button type="submit" class="quick-btn quick-btn-reject" style="width: 100%;">
+                <i class="bi bi-x-lg"></i> Нет
+            </button>
+        </form>
+        <form method="POST" action="{{ url_for('admin.quick_moderate_action', report_id=report.id) }}" style="display: block;">
+            <input type="hidden" name="action" value="approve">
+            <button type="submit" class="quick-btn quick-btn-approve" style="width: 100%;">
+                <i class="bi bi-check-lg"></i> Одобрить
+            </button>
+        </form>
+    </div>
+    
+    <p style="text-align: center; margin-top: 0.75rem; font-size: 0.85rem; color: var(--admin-text-light);">
+        Осталось на проверке: {{ pending_count }}
+    </p>
+    {% else %}
+    <div class="quick-empty">
+        <div class="quick-empty-icon">✅</div>
+        <div class="quick-empty-title">Всё обработано</div>
+        <div class="quick-empty-text">Нет необработанных репортов. Новые появятся здесь.</div>
+        <a href="{{ url_for('admin.dashboard') }}" class="quick-empty-link">
+            <i class="bi bi-speedometer2"></i> На дашборд
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var approveForm = document.querySelector('input[name="action"][value="approve"]')?.closest('form');
+    var rejectForm = document.querySelector('input[name="action"][value="reject"]')?.closest('form');
+    if (approveForm && rejectForm) {
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            if (e.key === 'ArrowRight' || e.key === '1') { e.preventDefault(); approveForm.submit(); }
+            if (e.key === 'ArrowLeft' || e.key === '2') { e.preventDefault(); rejectForm.submit(); }
+        });
+    }
+});
+</script>
+{% endblock %}

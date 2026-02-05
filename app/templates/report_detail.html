@@ -81,7 +81,11 @@
     <div class="report-detail">
         <div class="report-header">
             <div class="report-status" style="background: {{ 'rgba(255,255,255,0.3)' }};">
-                {{ '✅ Подтверждено' if report.status == 'confirmed' else '⏳ На проверке' if report.status == 'pending' else '🎉 Убрано' if report.status == 'cleaned' else '❌ Отклонено' }}
+                {% if report.status == 'cleaned' %}🎉 Убрано
+                {% elif report.status == 'in_progress' %}🔧 В работе
+                {% elif report.status == 'pending_verification' %}📋 На проверке уборки
+                {% elif report.status in ['pending', 'confirmed'] %}⏳ На рассмотрении
+                {% else %}❌ Отклонено{% endif %}
             </div>
             <h1>Репорт #{{ report.id }}</h1>
             <p>{{ report.district or 'Алматы' }} • {{ report.created_at.strftime('%d %B %Y, %H:%M') }}</p>
@@ -184,14 +188,15 @@
         attribution: '&copy; OpenStreetMap'
     }).addTo(map);
     
-    // Add marker with dynamic color based on status
-    let markerColor = '#66BB6A'; // green for confirmed
+    let markerColor = '#FFB300';
     {% if report.status == 'cleaned' %}
-    markerColor = '#66BB6A'; // green
-    {% elif report.status == 'pending' %}
-    markerColor = '#FFB300'; // yellow
+    markerColor = '#66BB6A';
+    {% elif report.status in ['in_progress', 'pending_verification'] %}
+    markerColor = '#E53935';
+    {% elif report.status in ['pending', 'confirmed'] %}
+    markerColor = '#FFB300';
     {% elif report.status == 'rejected' %}
-    markerColor = '#9E9E9E'; // gray
+    markerColor = '#9E9E9E';
     {% endif %}
     const icon = L.divIcon({
         className: 'custom-marker',

@@ -47,11 +47,11 @@ def sitemap_xml():
         {'loc': f'{base_url}/about', 'priority': '0.6', 'changefreq': 'monthly'},
     ]
     
-    # Динамические страницы репортов (последние 100)
-    reports = Report.query.filter(Report.status.in_(['confirmed', 'cleaned']))\
-        .order_by(Report.created_at.desc())\
-        .limit(100)\
-        .all()
+    reports = Report.query.filter(
+        Report.deleted_at.is_(None),
+        Report.status.notin_(['rejected', 'deleted']),
+        Report.status.in_(['confirmed', 'cleaned', 'in_progress', 'pending_verification', 'pending'])
+    ).order_by(Report.created_at.desc()).limit(100).all()
     
     for report in reports:
         pages.append({
@@ -100,14 +100,13 @@ def index():
 @bp.route('/map')
 def map():
     """Страница с картой загрязнений"""
-    # Статистика для фильтров
+    base = Report.query.filter(Report.deleted_at.is_(None), Report.status.notin_(['rejected', 'deleted']))
     stats = {
-        'total_reports': Report.query.count(),
-        'confirmed': Report.query.filter_by(status='confirmed').count(),
-        'cleaned': Report.query.filter_by(status='cleaned').count(),
-        'pending': Report.query.filter_by(status='pending').count()
+        'total_reports': base.count(),
+        'on_review': Report.query.filter(Report.deleted_at.is_(None), Report.status.in_(['pending', 'confirmed'])).count(),
+        'in_work': Report.query.filter(Report.deleted_at.is_(None), Report.status.in_(['in_progress', 'pending_verification'])).count(),
+        'cleaned': Report.query.filter(Report.deleted_at.is_(None), Report.status == 'cleaned').count(),
     }
-    
     return render_template('map.html', stats=stats)
 
 @bp.route('/about')

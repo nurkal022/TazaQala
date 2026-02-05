@@ -23,9 +23,9 @@
                 <div style="flex: 1;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                         <span style="padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600;
-                                     background: {{ '#e8f5e9' if report.status == 'confirmed' else '#fff9e6' if report.status == 'pending' else '#e3f2fd' if report.status == 'cleaned' else '#ffebee' }};
-                                     color: {{ '#2e7d32' if report.status == 'confirmed' else '#f57c00' if report.status == 'pending' else '#1565c0' if report.status == 'cleaned' else '#c62828' }};">
-                            {{ 'Подтверждено' if report.status == 'confirmed' else 'На проверке' if report.status == 'pending' else 'Убрано' if report.status == 'cleaned' else 'Отклонено' }}
+                                     background: {{ '#e3f2fd' if report.status == 'cleaned' else '#ffebee' if report.status in ['in_progress', 'pending_verification'] else '#fff9e6' if report.status in ['pending', 'confirmed'] else '#ffebee' }};
+                                     color: {{ '#1565c0' if report.status == 'cleaned' else '#c62828' if report.status in ['in_progress', 'pending_verification'] else '#f57c00' if report.status in ['pending', 'confirmed'] else '#c62828' }};">
+                            {{ 'Убрано' if report.status == 'cleaned' else 'В работе' if report.status == 'in_progress' else 'На проверке уборки' if report.status == 'pending_verification' else 'На рассмотрении' if report.status in ['pending', 'confirmed'] else 'Отклонено' }}
                         </span>
                         <span style="color: #757575; font-size: 0.9rem;">
                             {{ report.created_at.strftime('%d.%m.%Y %H:%M') }}

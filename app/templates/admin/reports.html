@@ -211,9 +211,20 @@
                 </td>
                 <td>{{ report.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
                 <td>
-                    <a href="/report/{{ report.id }}" target="_blank" class="action-btn">
-                        <i class="bi bi-eye"></i> Просмотр
-                    </a>
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <a href="/report/{{ report.id }}" target="_blank" class="action-btn">
+                            <i class="bi bi-eye"></i> Просмотр
+                        </a>
+                        {% if current_user.role == 'admin' %}
+                        <form method="POST" action="{{ url_for('admin.delete_report', report_id=report.id) }}" 
+                              style="display: inline;" 
+                              onsubmit="return confirm('Удалить репорт #{{ report.id }}? ID будет сохранен, но репорт скрыт из списка.');">
+                            <button type="submit" class="action-btn" style="background: #fee2e2; border-color: #dc2626; color: #dc2626;">
+                                <i class="bi bi-trash"></i> Удалить
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
                 </td>
             </tr>
             {% endfor %}

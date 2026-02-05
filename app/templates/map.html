@@ -424,19 +424,19 @@
         <div class="map-hero-card stats">
             <div class="stat-pill">
                 <strong>{{ stats.total_reports }}</strong>
-                <span>всего репортов</span>
+                <span>всего на карте</span>
             </div>
             <div class="stat-pill">
-                <strong>{{ stats.confirmed }}</strong>
-                <span>подтверждено</span>
+                <strong>{{ stats.on_review }}</strong>
+                <span>на рассмотрении</span>
+            </div>
+            <div class="stat-pill">
+                <strong>{{ stats.in_work }}</strong>
+                <span>в работе</span>
             </div>
             <div class="stat-pill">
                 <strong>{{ stats.cleaned }}</strong>
                 <span>убрано</span>
-            </div>
-            <div class="stat-pill">
-                <strong>{{ stats.pending }}</strong>
-                <span>на проверке</span>
             </div>
         </div>
     </section>
@@ -447,17 +447,17 @@
                 <i class="bi bi-globe2"></i>
                 Все <span id="count-all">({{ stats.total_reports }})</span>
             </button>
-            <button class="filter-btn" data-filter="confirmed" onclick="filterReports('confirmed', this)">
-                <i class="bi bi-shield-check"></i>
-                Подтверждённые <span id="count-confirmed">({{ stats.confirmed }})</span>
+            <button class="filter-btn" data-filter="on_review" onclick="filterReports('on_review', this)">
+                <i class="bi bi-hourglass-split"></i>
+                На рассмотрении <span id="count-on_review">({{ stats.on_review }})</span>
+            </button>
+            <button class="filter-btn" data-filter="in_work" onclick="filterReports('in_work', this)">
+                <i class="bi bi-gear-wide-connected"></i>
+                В работе <span id="count-in_work">({{ stats.in_work }})</span>
             </button>
             <button class="filter-btn" data-filter="cleaned" onclick="filterReports('cleaned', this)">
                 <i class="bi bi-stars"></i>
-                Убранные <span id="count-cleaned">({{ stats.cleaned }})</span>
-            </button>
-            <button class="filter-btn" data-filter="pending" onclick="filterReports('pending', this)">
-                <i class="bi bi-hourglass-split"></i>
-                На проверке <span id="count-pending">({{ stats.pending }})</span>
+                Убрано <span id="count-cleaned">({{ stats.cleaned }})</span>
             </button>
         </div>
         <div class="toolbar-actions">
@@ -481,19 +481,15 @@
                 <h4>Легенда</h4>
                 <div class="legend-item">
                     <div class="legend-color" style="background: #66BB6A; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>
-                    <span>Подтверждено</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #66BB6A; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>
                     <span>Убрано</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background: #FFB300; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>
-                    <span>На проверке</span>
+                    <div class="legend-color" style="background: #E53935; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>
+                    <span>В работе</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background: #9E9E9E; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>
-                    <span>Отклонено</span>
+                    <div class="legend-color" style="background: #FFB300; width: 20px; height: 20px; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.4);"></div>
+                    <span>На рассмотрении</span>
                 </div>
             </div>
         </div>
@@ -570,28 +566,27 @@
         
         // Добавляем все маркеры без дополнительной фильтрации (фильтрация уже в API)
         reports.forEach(report => {
-            // Проверяем валидность координат
+            if (report.status === 'rejected' || report.status === 'deleted') {
+                markersSkipped++;
+                return;
+            }
             if (!report.latitude || !report.longitude || 
                 isNaN(report.latitude) || isNaN(report.longitude)) {
-                console.warn('Пропущен репорт с невалидными координатами:', report.id);
                 markersSkipped++;
                 return;
             }
             
-            // Determine marker color based on status - простые яркие цвета
-            let color = '#66BB6A'; // green for confirmed
-            let statusText = 'Подтверждено';
+            let color = '#FFB300';
+            let statusText = 'На рассмотрении';
             if (report.status === 'cleaned') {
-                color = '#66BB6A'; // green
+                color = '#66BB6A';
                 statusText = 'Убрано';
-            }
-            if (report.status === 'pending') {
-                color = '#FFB300'; // yellow
-                statusText = 'На проверке';
-            }
-            if (report.status === 'rejected') {
-                color = '#9E9E9E'; // gray
-                statusText = 'Отклонено';
+            } else if (report.status === 'in_progress' || report.status === 'pending_verification') {
+                color = '#E53935';
+                statusText = report.status === 'pending_verification' ? 'На проверке уборки' : 'В работе';
+            } else if (report.status === 'pending' || report.status === 'confirmed') {
+                color = '#FFB300';
+                statusText = 'На рассмотрении';
             }
             
             const confidence = report.ai_confidence ? `${Math.round(report.ai_confidence * 100)}%` : '—';
@@ -706,15 +701,15 @@
     
     function getStatusText(status) {
         const statusMap = {
-            'confirmed': '✅ Подтверждено',
-            'cleaned': '🎉 Убрано',
-            'pending': '⏳ На проверке',
-            'rejected': '❌ Отклонено'
+            'pending': '⏳ На рассмотрении',
+            'confirmed': '⏳ На рассмотрении',
+            'in_progress': '🔧 В работе',
+            'pending_verification': '📋 На проверке уборки',
+            'cleaned': '🎉 Убрано'
         };
         return statusMap[status] || status;
     }
     
-    // Filter reports
     function filterReports(status, button) {
         document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
         if (button) {

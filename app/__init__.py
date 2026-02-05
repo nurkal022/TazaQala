@@ -61,6 +61,7 @@ def create_app(config_class=Config):
         # Apply lightweight schema patch for legacy databases without migrations
         _ensure_points_columns()
         _ensure_report_category_column()
+        _ensure_deleted_at_column()
         
         # Create default admin user if not exists
         from app.models import User
@@ -168,6 +169,23 @@ def _ensure_report_category_column():
         except Exception as exc:
             db.session.rollback()
             print(f"⚠️ Не удалось добавить report_category: {exc}")
+
+def _ensure_deleted_at_column():
+    """Добавляет колонку deleted_at для soft delete, если база была создана раньше"""
+    inspector = inspect(db.engine)
+    if 'reports' not in inspector.get_table_names():
+        return
+    
+    columns = {col['name'] for col in inspector.get_columns('reports')}
+    
+    if 'deleted_at' not in columns:
+        try:
+            db.session.execute(text('ALTER TABLE reports ADD COLUMN deleted_at DATETIME'))
+            db.session.commit()
+            print("ℹ️ Добавлена колонка reports.deleted_at")
+        except Exception as exc:
+            db.session.rollback()
+            print(f"⚠️ Не удалось добавить deleted_at: {exc}")
 
 from app import models
 

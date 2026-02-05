@@ -16,7 +16,9 @@ class Config:
 
     # AI Moderation thresholds
     AI_CONFIDENCE_AUTO_APPROVE = 0.85
+    AI_AUTO_CONFIRM_THRESHOLD = 0.85  # alias for templates/settings
     AI_CONFIDENCE_REJECT = 0.50
+    AI_REJECT_THRESHOLD = 0.50  # alias for templates/settings
     
     # Points system
     POINTS_CONFIRMED_REPORT = 10

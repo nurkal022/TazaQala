@@ -130,8 +130,7 @@ class OpenAIModeratorService:
         """Запасной вариант анализа без OpenAI"""
         import random
         
-        # Простая эвристика для MVP
-        confidence = random.uniform(0.6, 0.9)
+        confidence = random.uniform(0.8, 0.9)
         
         if confidence >= self.auto_approve_threshold:
             status = 'auto_confirmed'

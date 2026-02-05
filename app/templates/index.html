@@ -230,9 +230,9 @@
             <h2>📍 Карта загрязнений Алматы</h2>
             <div class="map-filters">
                 <button class="filter-btn active" onclick="filterReports('all')">Все</button>
-                <button class="filter-btn" onclick="filterReports('confirmed')">Подтверждённые</button>
-                <button class="filter-btn" onclick="filterReports('cleaned')">Убранные</button>
-                <button class="filter-btn" onclick="filterReports('pending')">На проверке</button>
+                <button class="filter-btn" onclick="filterReports('on_review')">На рассмотрении</button>
+                <button class="filter-btn" onclick="filterReports('in_work')">В работе</button>
+                <button class="filter-btn" onclick="filterReports('cleaned')">Убрано</button>
             </div>
         </div>
         
@@ -242,15 +242,15 @@
             <h4 style="margin-bottom: 0.5rem;">Легенда:</h4>
             <div class="legend-item">
                 <div class="legend-color" style="background: #66BB6A;"></div>
-                <span>Подтверждено</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #66BB6A;"></div>
                 <span>Убрано</span>
             </div>
             <div class="legend-item">
+                <div class="legend-color" style="background: #E53935;"></div>
+                <span>В работе</span>
+            </div>
+            <div class="legend-item">
                 <div class="legend-color" style="background: #FFB300;"></div>
-                <span>На проверке</span>
+                <span>На рассмотрении</span>
             </div>
         </div>
     </div>
@@ -272,7 +272,7 @@
     let allReports = [];
     
     // Load reports
-    async function loadReports(status = 'confirmed') {
+    async function loadReports(status = '') {
         try {
             const response = await fetch(`/api/reports?status=${status}`);
             const data = await response.json();
@@ -290,10 +290,11 @@
         markers = [];
         
         reports.forEach(report => {
-            // Determine marker color based on status
-            let color = '#66BB6A'; // green for confirmed
-            if (report.status === 'cleaned') color = '#66BB6A'; // green
-            if (report.status === 'pending') color = '#FFB300'; // yellow
+            if (report.status === 'rejected' || report.status === 'deleted') return;
+            let color = '#FFB300';
+            if (report.status === 'cleaned') color = '#66BB6A';
+            else if (report.status === 'in_progress' || report.status === 'pending_verification') color = '#E53935';
+            else if (report.status === 'pending' || report.status === 'confirmed') color = '#FFB300';
             
             const icon = L.divIcon({
                 className: 'custom-marker',
@@ -323,10 +324,11 @@
     
     function getStatusText(status) {
         const statusMap = {
-            'confirmed': '✅ Подтверждено',
-            'cleaned': '🎉 Убрано',
-            'pending': '⏳ На проверке',
-            'rejected': '❌ Отклонено'
+            'pending': '⏳ На рассмотрении',
+            'confirmed': '⏳ На рассмотрении',
+            'in_progress': '🔧 В работе',
+            'pending_verification': '📋 На проверке уборки',
+            'cleaned': '🎉 Убрано'
         };
         return statusMap[status] || status;
     }
@@ -347,8 +349,7 @@
         }
     }
     
-    // Initial load
-    loadReports('confirmed');
+    loadReports('');
 </script>
 {% endblock %}
 

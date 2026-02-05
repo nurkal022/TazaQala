@@ -42,10 +42,13 @@ def admin_only_required(f):
 
 def get_common_context():
     """Общий контекст для всех страниц админки"""
+    base_query = Report.query.filter(Report.deleted_at.is_(None))
+    # На рассмотрении = pending + confirmed (те, что ждут решения модератора)
+    pending_count = base_query.filter(Report.status.in_(['pending', 'confirmed'])).count()
     return {
-        'pending_count': Report.query.filter_by(status='pending').count(),
-        'in_progress_count': Report.query.filter_by(status='in_progress').count(),
-        'pending_verification_count': Report.query.filter_by(status='pending_verification').count(),
+        'pending_count': pending_count,
+        'in_progress_count': base_query.filter_by(status='in_progress').count(),
+        'pending_verification_count': base_query.filter_by(status='pending_verification').count(),
         'notification_count': Notification.query.filter_by(is_read=False).count() if hasattr(Notification, 'is_read') else 0
     }
 
@@ -101,14 +104,17 @@ def dashboard():
     """Дашборд — главная страница админки"""
     ctx = get_common_context()
     
-    # Новые репорты (ожидают модерации)
-    pending_reports = Report.query.filter_by(status='pending')\
+    # Исключаем удаленные репорты
+    base_query = Report.query.filter(Report.deleted_at.is_(None))
+    
+    # На рассмотрении (pending + confirmed) — ожидают решения модератора
+    pending_reports = base_query.filter(Report.status.in_(['pending', 'confirmed']))\
         .order_by(Report.created_at.desc())\
         .limit(20)\
         .all()
     
     # Репорты в работе (для модератора)
-    in_progress_reports = Report.query.filter_by(status='in_progress')\
+    in_progress_reports = base_query.filter_by(status='in_progress')\
         .order_by(Report.created_at.desc())\
         .limit(20)\
         .all()
@@ -116,7 +122,7 @@ def dashboard():
     # Репорты на финальной проверке (только для админа)
     pending_verification_reports = []
     if current_user.role == 'admin':
-        pending_verification_reports = Report.query.filter_by(status='pending_verification')\
+        pending_verification_reports = base_query.filter_by(status='pending_verification')\
             .order_by(Report.cleaned_at.desc())\
             .all()
     
@@ -125,11 +131,11 @@ def dashboard():
         'pending': ctx['pending_count'],
         'in_progress': ctx['in_progress_count'],
         'pending_verification': ctx['pending_verification_count'],
-        'total_reports': Report.query.count(),
+        'total_reports': base_query.count(),
         'total_users': User.query.count(),
-        'confirmed': Report.query.filter_by(status='confirmed').count(),
-        'cleaned': Report.query.filter_by(status='cleaned').count(),
-        'rejected': Report.query.filter_by(status='rejected').count(),
+        'confirmed': base_query.filter_by(status='confirmed').count(),
+        'cleaned': base_query.filter_by(status='cleaned').count(),
+        'rejected': base_query.filter_by(status='rejected').count(),
     }
     
     return render_template('admin/dashboard.html',
@@ -149,7 +155,8 @@ def reports():
     page = request.args.get('page', 1, type=int)
     status = request.args.get('status')
     
-    query = Report.query
+    # Исключаем удаленные репорты (soft delete)
+    query = Report.query.filter(Report.deleted_at.is_(None))
     
     if status:
         query = query.filter_by(status=status)
@@ -160,6 +167,61 @@ def reports():
     return render_template('admin/reports.html', 
                          reports=reports,
                          **ctx)
+
+
+@bp.route('/quick-moderate')
+@login_required
+@admin_required
+def quick_moderate():
+    """Быстрая модерация: репорты на рассмотрении (pending + confirmed)"""
+    ctx = get_common_context()
+    report = Report.query.filter(
+        Report.deleted_at.is_(None),
+        Report.status.in_(['pending', 'confirmed'])
+    ).order_by(Report.created_at.asc()).first()
+    
+    return render_template('admin/quick_moderate.html', report=report, **ctx)
+
+
+@bp.route('/quick-moderate/<int:report_id>/action', methods=['POST'])
+@login_required
+@admin_required
+def quick_moderate_action(report_id):
+    """Действие по репорту: approve (взять в работу) или reject. Редирект на следующий репорт."""
+    report = Report.query.get_or_404(report_id)
+    
+    if report.deleted_at or report.status not in ('pending', 'confirmed'):
+        flash('Репорт уже обработан', 'warning')
+        return redirect(url_for('admin.quick_moderate'))
+    
+    action = request.form.get('action')  # approve, reject
+    
+    if action == 'approve':
+        report.status = 'in_progress'
+        report.moderator_id = current_user.id
+        report.moderation_comment = ''
+        report.moderated_at = datetime.utcnow()
+        db.session.commit()
+        flash(f'Репорт #{report_id} взят в работу', 'success')
+    elif action == 'reject':
+        report.status = 'rejected'
+        report.moderator_id = current_user.id
+        report.moderation_comment = request.form.get('comment', '') or 'Отклонено при быстрой модерации'
+        report.moderated_at = datetime.utcnow()
+        if report.author:
+            report.author.rejected_reports += 1
+            db.session.add(Notification(
+                user_id=report.author.id,
+                message=f'Ваш репорт #{report_id} отклонен.',
+                notification_type='report_rejected',
+                related_report_id=report.id
+            ))
+        db.session.commit()
+        flash(f'Репорт #{report_id} отклонен', 'info')
+    else:
+        flash('Неизвестное действие', 'warning')
+    
+    return redirect(url_for('admin.quick_moderate'))
 
 
 @bp.route('/report/<int:report_id>/moderate', methods=['POST'])
@@ -207,6 +269,48 @@ def moderate_report(report_id):
     db.session.commit()
     
     return redirect(url_for('admin.dashboard'))
+
+
+@bp.route('/report/<int:report_id>/delete', methods=['POST'])
+@login_required
+@admin_only_required
+def delete_report(report_id):
+    """Удаление репорта с сохранением ID (soft delete)"""
+    report = Report.query.get_or_404(report_id)
+    
+    # Проверяем, что репорт не уже удален
+    if report.deleted_at:
+        flash('Репорт уже удален', 'warning')
+        return redirect(url_for('admin.reports'))
+    
+    # Мягкое удаление (сохраняем ID)
+    report.soft_delete()
+    
+    # Удаляем связанные уведомления
+    Notification.query.filter_by(related_report_id=report_id).delete()
+    
+    # Обновляем статистику пользователя, если есть автор
+    if report.author:
+        # Пересчитываем статистику
+        report.author.reports_count = Report.query.filter(
+            Report.user_id == report.author.id,
+            Report.deleted_at.is_(None)
+        ).count()
+        report.author.confirmed_reports = Report.query.filter(
+            Report.user_id == report.author.id,
+            Report.status == 'confirmed',
+            Report.deleted_at.is_(None)
+        ).count()
+        report.author.rejected_reports = Report.query.filter(
+            Report.user_id == report.author.id,
+            Report.status == 'rejected',
+            Report.deleted_at.is_(None)
+        ).count()
+    
+    db.session.commit()
+    
+    flash(f'Репорт #{report_id} удален (ID сохранен)', 'success')
+    return redirect(url_for('admin.reports', status=request.args.get('status')))
 
 
 @bp.route('/report/<int:report_id>/complete', methods=['GET', 'POST'])
@@ -276,9 +380,11 @@ def final_verification():
     """Страница финальной проверки (только для админа)"""
     ctx = get_common_context()
     
-    reports = Report.query.filter_by(status='pending_verification')\
-        .order_by(Report.cleaned_at.desc())\
-        .all()
+    # Исключаем удаленные репорты
+    reports = Report.query.filter(
+        Report.deleted_at.is_(None),
+        Report.status == 'pending_verification'
+    ).order_by(Report.cleaned_at.desc()).all()
     
     return render_template('admin/final_verification.html', reports=reports, **ctx)
 
@@ -436,12 +542,15 @@ def statistics():
     from datetime import timedelta
     ctx = get_common_context()
     
+    # Исключаем удаленные репорты
+    base_query = Report.query.filter(Report.deleted_at.is_(None))
+    
     stats = {
-        'total_reports': Report.query.count(),
-        'cleaned': Report.query.filter_by(status='cleaned').count(),
-        'in_progress': Report.query.filter_by(status='in_progress').count(),
-        'pending': Report.query.filter_by(status='pending').count(),
-        'rejected': Report.query.filter_by(status='rejected').count()
+        'total_reports': base_query.count(),
+        'cleaned': base_query.filter_by(status='cleaned').count(),
+        'in_progress': base_query.filter_by(status='in_progress').count(),
+        'pending': base_query.filter_by(status='pending').count(),
+        'rejected': base_query.filter_by(status='rejected').count()
     }
     
     # Статистика по дням
@@ -449,7 +558,7 @@ def statistics():
     for i in range(29, -1, -1):
         day_start = datetime.utcnow() - timedelta(days=i+1)
         day_end = datetime.utcnow() - timedelta(days=i)
-        count = Report.query.filter(
+        count = base_query.filter(
             Report.created_at >= day_start,
             Report.created_at < day_end
         ).count()
@@ -457,7 +566,7 @@ def statistics():
         daily_stats['values'].append(count)
     
     # По районам
-    district_stats_list = Report.query.with_entities(
+    district_stats_list = base_query.with_entities(
         Report.district,
         func.count(Report.id).label('total'),
         func.sum(case((Report.status == 'cleaned', 1), else_=0)).label('cleaned')
@@ -470,7 +579,7 @@ def statistics():
     }
     
     # По категориям
-    category_stats_list = Report.query.with_entities(
+    category_stats_list = base_query.with_entities(
         func.coalesce(Report.report_category, Report.trash_type, 'trash').label('category'),
         func.count(Report.id).label('count')
     ).group_by('category').all()

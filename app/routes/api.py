@@ -17,7 +17,10 @@ def get_reports():
     ALMATY_LON_MIN = 76.4
     ALMATY_LON_MAX = 77.3
     
+    # Исключаем удаленные и отклонённые — на карте не показываем
     query = Report.query.filter(
+        Report.deleted_at.is_(None),
+        Report.status.notin_(['rejected', 'deleted']),
         Report.latitude >= ALMATY_LAT_MIN,
         Report.latitude <= ALMATY_LAT_MAX,
         Report.longitude >= ALMATY_LON_MIN,
@@ -25,7 +28,13 @@ def get_reports():
     )
     
     if status:
-        query = query.filter_by(status=status)
+        # Фильтр по группе статусов для карты
+        if status == 'on_review':
+            query = query.filter(Report.status.in_(['pending', 'confirmed']))
+        elif status == 'in_work':
+            query = query.filter(Report.status.in_(['in_progress', 'pending_verification']))
+        else:
+            query = query.filter_by(status=status)
     
     if district:
         query = query.filter_by(district=district)
@@ -60,9 +69,9 @@ def get_leaderboard():
     district = request.args.get('district')
     
     if district:
-        # Лидерборд по району
+        # Лидерборд по району (исключаем удаленные репорты)
         users = User.query.join(Report)\
-            .filter(Report.district == district)\
+            .filter(Report.district == district, Report.deleted_at.is_(None))\
             .group_by(User.id)\
             .order_by(func.count(Report.id).desc())\
             .limit(limit)\
@@ -88,22 +97,24 @@ def get_leaderboard():
 @bp.route('/stats')
 def get_stats():
     """API для получения общей статистики"""
-    total_reports = Report.query.count()
-    confirmed_reports = Report.query.filter_by(status='confirmed').count()
-    cleaned_reports = Report.query.filter_by(status='cleaned').count()
-    pending_reports = Report.query.filter_by(status='pending').count()
+    # Исключаем удаленные репорты
+    base_query = Report.query.filter(Report.deleted_at.is_(None))
+    total_reports = base_query.count()
+    confirmed_reports = base_query.filter_by(status='confirmed').count()
+    cleaned_reports = base_query.filter_by(status='cleaned').count()
+    pending_reports = base_query.filter_by(status='pending').count()
     active_users = User.query.filter(User.reports_count > 0).count()
     
     # Статистика по районам
-    district_stats = Report.query.with_entities(
+    district_stats = base_query.with_entities(
         Report.district,
         func.count(Report.id).label('total'),
         func.sum(func.case([(Report.status == 'cleaned', 1)], else_=0)).label('cleaned')
     ).group_by(Report.district).all()
     
     # Статистика AI
-    ai_auto_confirmed = Report.query.filter_by(ai_status='auto_confirmed').count()
-    ai_needs_review = Report.query.filter_by(ai_status='needs_review').count()
+    ai_auto_confirmed = base_query.filter_by(ai_status='auto_confirmed').count()
+    ai_needs_review = base_query.filter_by(ai_status='needs_review').count()
     
     return jsonify({
         'total_reports': total_reports,
@@ -123,7 +134,7 @@ def get_stats():
 @bp.route('/report/<int:report_id>')
 def get_report(report_id):
     """API для получения конкретного репорта"""
-    report = Report.query.get_or_404(report_id)
+    report = Report.query.filter(Report.deleted_at.is_(None)).filter_by(id=report_id).first_or_404()
     
     return jsonify({
         'id': report.id,
