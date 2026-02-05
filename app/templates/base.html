@@ -4,9 +4,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Чистый Алматы{% endblock %} - Taza Qala</title>
-    <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+    <title>{% block title %}TazaQala{% endblock %}</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{% block meta_description %}TazaQala — гражданская экоплатформа для мониторинга и устранения экологических нарушений. Сообщайте о мусоре, отслеживайте уборку на карте, получайте баллы за активность.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}TazaQala, Taza Qala, таза кала, таза қала, экология, чистый город, таза қала, экоплатформа, Казахстан, қоқыс, тазалық, волонтёры, мусор, уборка, карта загрязнений, экологические нарушения, қала тазалығы{% endblock %}">
+    <meta name="author" content="TazaQala">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="{{ request.url }}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:title" content="{% block og_title %}TazaQala — Гражданская экоплатформа{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Сообщайте о загрязнениях, отслеживайте уборку на карте, получайте баллы и призы за экоактивность.{% endblock %}">
+    <meta property="og:image" content="https://tazaqala.com/static/logo.png">
+    <meta property="og:locale" content="ru_RU">
+    <meta property="og:site_name" content="TazaQala">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ request.url }}">
+    <meta name="twitter:title" content="TazaQala — Гражданская экоплатформа">
+    <meta name="twitter:description" content="Сообщайте о загрязнениях, отслеживайте уборку на карте, получайте баллы и призы.">
+    <meta name="twitter:image" content="https://tazaqala.com/static/logo.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.png') }}">
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "TazaQala",
+        "description": "Гражданская экоплатформа для мониторинга и устранения экологических нарушений в городе",
+        "url": "https://tazaqala.com",
+        "applicationCategory": "EnvironmentApplication",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "KZT"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "TazaQala",
+            "url": "https://tazaqala.com"
+        }
+    }
+    </script>
+    {% block extra_meta %}{% endblock %}
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -371,8 +420,8 @@
     <nav class="navbar">
         <div class="navbar-container">
             <a href="{{ url_for('main.index') }}" class="logo">
-                <img src="{{ url_for('static', filename='logo.png') }}" alt="Чистый Алматы">
-                <span class="logo-text">ЧИСТЫЙ АЛМАТЫ</span>
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="TazaQala">
+                <span class="logo-text">TAZAQALA</span>
             </a>
 
             <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
@@ -432,7 +481,7 @@
         <div class="footer-content">
             <div class="footer-section">
                 <h3>О проекте</h3>
-                <p>Гражданская платформа для создания чистого Алматы через участие каждого жителя.</p>
+                <p>Гражданская экоплатформа для чистого города через участие каждого жителя.</p>
             </div>
 
             <div class="footer-section">
@@ -455,7 +504,7 @@
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2025 Чистый Алматы / Taza Qala. Вместе к чистоте!</p>
+            <p>&copy; 2025 TazaQala. Вместе к чистоте!</p>
         </div>
     </footer>
 

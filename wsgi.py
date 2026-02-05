@@ -1,5 +1,5 @@
 """
-WSGI entry point for Taza Qala application
+WSGI entry point for TazaQala application
 Используется для запуска через Gunicorn на production сервере
 """
 from app import create_app

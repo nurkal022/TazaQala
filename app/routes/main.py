@@ -1,10 +1,83 @@
-from flask import Blueprint, render_template, request, abort, flash, redirect, url_for
+from flask import Blueprint, render_template, request, abort, flash, redirect, url_for, Response, make_response
 from flask_login import login_required, current_user
 from app import db
 from app.models import Report, User, Reward, RewardRedemption, Notification
 from sqlalchemy import func, case
+from datetime import datetime
 
 bp = Blueprint('main', __name__)
+
+
+@bp.route('/robots.txt')
+def robots_txt():
+    """Robots.txt для SEO"""
+    content = """# TazaQala Robots.txt
+User-agent: *
+Allow: /
+
+Sitemap: https://tazaqala.com/sitemap.xml
+
+Disallow: /admin/
+Disallow: /auth/logout
+Disallow: /cleaner/
+
+Allow: /
+Allow: /map
+Allow: /leaderboard
+Allow: /rewards
+Allow: /about
+Allow: /reports/
+
+Crawl-delay: 1
+"""
+    return Response(content, mimetype='text/plain')
+
+
+@bp.route('/sitemap.xml')
+def sitemap_xml():
+    """Sitemap.xml для SEO"""
+    base_url = 'https://tazaqala.com'
+    
+    # Статические страницы
+    pages = [
+        {'loc': f'{base_url}/', 'priority': '1.0', 'changefreq': 'daily'},
+        {'loc': f'{base_url}/map', 'priority': '0.9', 'changefreq': 'hourly'},
+        {'loc': f'{base_url}/leaderboard', 'priority': '0.8', 'changefreq': 'daily'},
+        {'loc': f'{base_url}/rewards', 'priority': '0.7', 'changefreq': 'weekly'},
+        {'loc': f'{base_url}/about', 'priority': '0.6', 'changefreq': 'monthly'},
+    ]
+    
+    # Динамические страницы репортов (последние 100)
+    reports = Report.query.filter(Report.status.in_(['confirmed', 'cleaned']))\
+        .order_by(Report.created_at.desc())\
+        .limit(100)\
+        .all()
+    
+    for report in reports:
+        pages.append({
+            'loc': f'{base_url}/report/{report.id}',
+            'lastmod': report.updated_at.strftime('%Y-%m-%d') if report.updated_at else report.created_at.strftime('%Y-%m-%d'),
+            'priority': '0.5',
+            'changefreq': 'weekly'
+        })
+    
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    
+    for page in pages:
+        xml += '  <url>\n'
+        xml += f'    <loc>{page["loc"]}</loc>\n'
+        if 'lastmod' in page:
+            xml += f'    <lastmod>{page["lastmod"]}</lastmod>\n'
+        xml += f'    <changefreq>{page["changefreq"]}</changefreq>\n'
+        xml += f'    <priority>{page["priority"]}</priority>\n'
+        xml += '  </url>\n'
+    
+    xml += '</urlset>'
+    
+    response = make_response(xml)
+    response.headers['Content-Type'] = 'application/xml'
+    return response
 
 @bp.route('/')
 def index():

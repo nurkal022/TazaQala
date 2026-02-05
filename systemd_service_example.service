@@ -1,10 +1,10 @@
-# Пример systemd service файла для Taza Qala
+# Пример systemd service файла для TazaQala
 # Сохраните это как /etc/systemd/system/taza_qala.service
 # 
 # ВАЖНО: Замените 'ваш-секретный-ключ' на реальный секретный ключ!
 
 [Unit]
-Description=Taza Qala Flask Application
+Description=TazaQala Flask Application
 After=network.target
 
 [Service]

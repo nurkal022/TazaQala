@@ -1,6 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Чистый Алматы - Гражданская экоплатформа{% endblock %}
+{% block title %}TazaQala — Гражданская экоплатформа | Чистый город начинается с тебя{% endblock %}
+
+{% block meta_description %}TazaQala — платформа для сообщений о мусоре и загрязнениях. Отмечайте нарушения на карте, отслеживайте уборку, получайте баллы и призы за экоактивность. Присоединяйтесь!{% endblock %}
+
+{% block meta_keywords %}TazaQala, Taza Qala, таза кала, таза қала, экология, чистый город, мусор, загрязнения, волонтёры, карта загрязнений, экоплатформа, баллы, призы, уборка мусора, қоқыс, тазалық, қала тазалығы, Қазақстан{% endblock %}
+
+{% block og_title %}TazaQala — Чистый город начинается с тебя{% endblock %}
+
+{% block og_description %}Сообщайте о мусоре и загрязнениях, отслеживайте уборку на интерактивной карте, получайте баллы и призы за экоактивность.{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -434,7 +442,7 @@
         </div>
         
         <h1 class="hero-title">
-            <span class="highlight">Чистый Алматы</span><br>
+            <span class="highlight">TazaQala</span><br>
             начинается с тебя
         </h1>
         
@@ -481,7 +489,7 @@
 
 <!-- Features Section -->
 <section class="features-section">
-    <h2 class="section-title">Почему Taza Qala?</h2>
+    <h2 class="section-title">Почему TazaQala?</h2>
     <p class="section-subtitle">
         Современная платформа для вовлечения жителей в заботу о чистоте города
     </p>
@@ -541,7 +549,7 @@
 <section class="cta-section">
     <h2 class="cta-title">Присоединяйся к движению!</h2>
     <p class="cta-text">
-        Вместе мы можем сделать Алматы чище и комфортнее для жизни
+        Вместе мы можем сделать город чище и комфортнее для жизни
     </p>
     <div class="hero-buttons">
         {% if current_user.is_authenticated %}

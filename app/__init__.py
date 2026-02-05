@@ -11,9 +11,11 @@ def create_app(config_class=Config):
     # Указываем правильные пути к static и templates
     # Поддержка подпути для развертывания на /taza_qala
     # SCRIPT_NAME будет передаваться через заголовки от nginx
-    app = Flask(__name__, 
-                static_folder='../static',
-                static_url_path='/static')
+    app = Flask(
+        __name__,
+        static_folder='../static',
+        static_url_path='/static'
+    )
     app.config.from_object(config_class)
     
     # Middleware для обработки подпути /taza_qala из заголовков nginx

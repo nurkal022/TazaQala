@@ -1,4 +1,4 @@
-// Main JavaScript for Taza Qala
+// Main JavaScript for TazaQala
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize mobile menu

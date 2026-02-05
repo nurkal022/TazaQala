@@ -33,3 +33,5 @@ static/uploads/*
 # Environment
 .env
 .env.local
+backups/
+taza_qala.db
